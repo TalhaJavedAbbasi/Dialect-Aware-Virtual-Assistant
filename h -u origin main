@@ -1,0 +1,17 @@
+[33mcommit 6abaf0f4ebe9c54ef8cd6c53a9d84c6d60eb7c9f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m)[m
+Author: Talha Javed <talhaabbasi568@gmail.com>
+Date:   Wed Aug 28 16:16:31 2024 +0500
+
+    use env var and create Procfile
+
+[33mcommit 3890eb554c9c9ff22c2fc819c3a4479af0ef38f5[m
+Author: Talha Javed <talhaabbasi568@gmail.com>
+Date:   Wed Aug 28 15:36:30 2024 +0500
+
+    Finish TODO
+
+[33mcommit ca2a6e1c5dc87be1903769d6619837b2389545f3[m
+Author: Talha Javed <talhaabbasi568@gmail.com>
+Date:   Wed Aug 28 15:30:17 2024 +0500
+
+    initial commit
