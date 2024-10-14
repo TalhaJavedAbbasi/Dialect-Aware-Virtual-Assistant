@@ -1,15 +1,17 @@
 from datetime import date
 from flask import Flask, abort, render_template, redirect, url_for, flash
+from authlib.integrations.flask_client import OAuth
 from flask_bootstrap import Bootstrap5
 from flask_ckeditor import CKEditor
 from flask_gravatar import Gravatar
 from flask_login import UserMixin, login_user, LoginManager, current_user, logout_user
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship, DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import Integer, String, Text
+from sqlalchemy import Integer, String, Text, text
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 from forms import CreatePostForm, LoginForm, RegisterForm, CommentForm
+from flask_mail import Mail, Message
 import os
 
 '''
@@ -33,6 +35,19 @@ Bootstrap5(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 
+# Google OAuth configuration
+oauth = OAuth(app)
+
+google = oauth.register(
+    name='google',
+    client_id=os.environ.get('GOOGLE_CLIENT_ID'),
+    client_secret=os.environ.get('GOOGLE_CLIENT_SECRET'),
+    access_token_url='https://accounts.google.com/o/oauth2/token',
+    authorize_url='https://accounts.google.com/o/oauth2/auth',
+    client_kwargs={
+        'scope': 'email profile',
+    },
+)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -76,6 +91,7 @@ class User(UserMixin, db.Model):
     email: Mapped[str] = mapped_column(String(250), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(String(250), nullable=False)
     name: Mapped[str] = mapped_column(String(250), nullable=False)
+    google_registered: Mapped[bool] = mapped_column(db.Boolean, default=False)
     posts = relationship("BlogPost", back_populates="author")
     comments = relationship("Comment", back_populates="comment_author")
 
@@ -88,6 +104,7 @@ class Comment(db.Model):
     comment_author = relationship("User", back_populates="comments")
     post_id: Mapped[str] = mapped_column(Integer, db.ForeignKey("blog_posts.id"))
     parent_post = relationship("BlogPost", back_populates="comments")
+
 
 with app.app_context():
     db.create_all()
@@ -134,13 +151,18 @@ def login():
         email = form.email.data
         password = form.password.data
         result = db.session.execute(db.select(User).where(User.email == email))
-        # Note, email in db is unique so will only have one result.
         user = result.scalar()
 
         if not user:
             flash("That email does not exist, please try again.")
             return redirect(url_for('login'))
-            # Password incorrect
+
+        # Check if the user signed up via Google
+        elif user.google_registered:
+            flash('You registered using Google sign-in. Please use Google to log in.')
+            return redirect(url_for('login'))
+
+        # Password check for non-Google users
         elif not check_password_hash(user.password, password):
             flash('Password incorrect, please try again.')
             return redirect(url_for('login'))
@@ -149,6 +171,62 @@ def login():
             return redirect(url_for('get_all_posts'))
 
     return render_template("login.html", form=form, current_user=current_user)
+
+
+## Google OAuth login route
+@app.route('/login/google')
+def google_login():
+    redirect_uri = url_for('authorize', _external=True)
+    return google.authorize_redirect(redirect_uri)
+
+
+# callback route to handle Google OAuth login
+@app.route('/authorize')
+def authorize():
+    try:
+        # Retrieve the token from the OAuth callback
+        token = google.authorize_access_token()
+
+        if not token:
+            flash("Authorization failed.")
+            return redirect(url_for('login'))
+
+        # Fetch user info from Google's userinfo endpoint
+        user_info_response = google.get('https://www.googleapis.com/oauth2/v3/userinfo')
+        user_info = user_info_response.json()
+        print("User info received:", user_info)
+
+        user_email = user_info.get('email')
+
+        # Example logic to check if user exists in the database
+        result = db.session.execute(db.select(User).where(User.email == user_email))
+        user = result.scalar()
+
+        if user:
+            # If the user exists, check if they are registered via Google
+            if not user.google_registered:  # Check if the user is already registered via Google
+                user.google_registered = True  # Update the field
+                print(f"Updating user {user.email} to have google_registered = True")
+                db.session.commit()  # Save changes
+            else:
+                print(f"User {user.email} is already registered with Google.")
+        else:
+            # Register a new user if they do not exist
+            new_user = User(
+                email=user_email,
+                name=user_info.get('name'),
+                password=generate_password_hash('default_password', method='pbkdf2:sha256:600000', salt_length=8),
+                google_registered = True
+            )
+            db.session.add(new_user)
+            db.session.commit()
+            login_user(new_user)
+
+        return redirect(url_for('get_all_posts'))
+
+    except Exception as e:
+        flash(f"An error occurred: {str(e)}")
+        return redirect(url_for('login'))
 
 
 @app.route('/logout')
@@ -243,4 +321,4 @@ def contact():
 
 
 if __name__ == "__main__":
-    app.run(debug=False)
+    app.run(debug=True)

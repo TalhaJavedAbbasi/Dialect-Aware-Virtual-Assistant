@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField
-from wtforms.validators import DataRequired, URL
+from wtforms.fields.simple import BooleanField
+from wtforms.validators import DataRequired, URL, Email, Regexp
 from flask_ckeditor import CKEditorField
 
 
@@ -14,15 +15,20 @@ class CreatePostForm(FlaskForm):
 
 
 class RegisterForm(FlaskForm):
-    email = StringField("Email", validators=[DataRequired()])
-    password = PasswordField("Password", validators=[DataRequired()])
+    email = StringField("Email", validators=[DataRequired(), Email(message="Please enter a valid email address.")])
+    password = PasswordField("Password", validators=[DataRequired(), Regexp(
+            r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$',
+            message="Password must be at least 8 characters long, contain at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character."
+        )])
+    show_password = BooleanField('Show Password')
     name = StringField("Name", validators=[DataRequired()])
     submit = SubmitField("SIGN ME UP")
 
 
 class LoginForm(FlaskForm):
-    email = StringField("Email", validators=[DataRequired()])
+    email = StringField("Email", validators=[DataRequired(), Email(message="Please enter a valid email address.")])
     password = PasswordField("Password", validators=[DataRequired()])
+    show_password = BooleanField('Show Password')
     submit = SubmitField("Let Me In!")
 
 

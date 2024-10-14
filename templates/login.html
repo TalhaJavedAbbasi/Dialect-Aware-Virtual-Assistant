@@ -30,9 +30,27 @@ include "header.html" %}
       {% endwith %}
       <div class="col-lg-8 col-md-10 mx-auto">
        {{render_form(form, novalidate=True, button_map={"submit": "primary"}) }}
+
+        <div class="mt-3">
+          <a href="{{url_for('google_login')}}" class="btn btn-outline-danger">
+            <i class="fab fa-google"></i> Sign in with Google
+          </a>
       </div>
+      </div>
+
+
     </div>
   </div>
 </main>
+<script>
+  document.getElementById('show_password').onclick = function() {
+      var passwordField = document.getElementById('password');
+      if (this.checked) {
+          passwordField.type = 'text';
+      } else {
+          passwordField.type = 'password';
+      }
+  };
+</script>
 
 {% include "footer.html" %} {% endblock %}
