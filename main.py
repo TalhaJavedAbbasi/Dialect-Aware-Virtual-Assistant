@@ -1,5 +1,5 @@
-from datetime import date
-from flask import Flask, abort, render_template, redirect, url_for, flash
+from datetime import date, datetime, timedelta, timezone
+from flask import Flask, abort, render_template, redirect, url_for, flash, request
 from authlib.integrations.flask_client import OAuth
 from flask_bootstrap import Bootstrap5
 from flask_ckeditor import CKEditor
@@ -12,6 +12,7 @@ from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 from forms import CreatePostForm, LoginForm, RegisterForm, CommentForm
 from flask_mail import Mail, Message
+import jwt
 import os
 
 '''
@@ -48,6 +49,76 @@ google = oauth.register(
         'scope': 'email profile',
     },
 )
+
+# Configure Flask-Mail
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'  # Use your email provider
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'talhaabbasi568@gmail.com'  # Your email
+app.config['MAIL_PASSWORD'] = 'tcum ilkt fyjl wesy'  # Your email password
+app.config['MAIL_DEFAULT_SENDER'] = 'talhaabbasi568@gmail.com'
+
+mail = Mail(app)
+
+
+def send_verification_email(user):
+    SECRET_KEY = app.config['SECRET_KEY']
+
+    try:
+        # Create JWT token with 1 hour expiration
+        token = jwt.encode(
+            {'user_id': user.id, 'exp': datetime.now(timezone.utc) + timedelta(hours=1)},
+            SECRET_KEY,
+            algorithm='HS256'
+        )
+
+        # Use url_for with _external=True to generate the full URL for email verification
+        verification_link = 'http://127.0.0.1:5000/verify_email/' + token
+
+        # Create the email message
+        msg = Message('Email Verification', recipients=[user.email])
+        msg.body = f'Click the link to verify your email: {verification_link}'
+
+        # Send the email
+        mail.send(msg)
+        print(f'Verification email sent to {user.email}')
+
+    except Exception as e:
+        print(f"Error sending verification email: {str(e)}")
+
+
+@app.route('/verify_email/<token>')
+def verify_email(token):
+    try:
+        # Decode the token to get the user ID
+        SECRET_KEY = app.config['SECRET_KEY']
+        data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+        user_id = data['user_id']
+
+        user = User.query.get(user_id)  # Assuming User is your user model
+        if user:
+            if user.is_verified:
+                flash('Your email is already verified!', 'info')
+            else:
+                # Mark the user as verified
+                user.is_verified = True
+                db.session.commit()
+                login_user(user)
+                flash('Your email has been verified!', 'success')
+        else:
+            flash('Verification link is invalid or has expired.', 'danger')
+
+    except jwt.ExpiredSignatureError:
+        flash('The verification link has expired. Please sign up again.', 'danger')
+    except jwt.InvalidTokenError:
+        flash('Invalid verification link. Please try again.', 'danger')
+
+    return redirect(url_for('login'))  # Redirect to login page after verification
+
+@app.route('/verification')
+def verification_page():
+    user_email = request.args.get('email')  # Get the email from the query parameters
+    return render_template('verification.html', email=user_email)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -92,6 +163,7 @@ class User(UserMixin, db.Model):
     password: Mapped[str] = mapped_column(String(250), nullable=False)
     name: Mapped[str] = mapped_column(String(250), nullable=False)
     google_registered: Mapped[bool] = mapped_column(db.Boolean, default=False)
+    is_verified: Mapped[bool] = mapped_column(db.Boolean, default=False)
     posts = relationship("BlogPost", back_populates="author")
     comments = relationship("Comment", back_populates="comment_author")
 
@@ -122,26 +194,41 @@ gravatar = Gravatar(app,
 @app.route('/register', methods=["GET", "POST"])
 def register():
     user_form = RegisterForm()
+
     if user_form.validate_on_submit():
         user_email = user_form.email.data
-        result = db.session.execute(db.select(User).where(User.email == user_email))
-        user = result.scalar()
-        if user:
-            flash("You've already signed up with that email, log in instead!")
-            return redirect(url_for('login'))
         user_password = user_form.password.data
         user_name = user_form.name.data
+
+        # Check if the user already exists
+        result = db.session.execute(db.select(User).where(User.email == user_email))
+        user = result.scalar()
+
+        if user:
+            if not user.is_verified:
+                flash("A verification email has been sent to your email address. Please check your inbox.", 'info')
+                # You could add logic here to resend the verification email if needed
+            else:
+                flash("Your email is already verified! Please log in.", 'warning')
+            return redirect(url_for('login'))
+
+        # If the user doesn't exist, create a new user with is_verified=False
         new_user = User(
             email=user_email,
-            password=generate_password_hash(user_password,method='pbkdf2:sha256:600000',salt_length=8),
-            name=user_name
+            password=generate_password_hash(user_password, method='pbkdf2:sha256:600000', salt_length=8),
+            name=user_name,
+            is_verified=False  # Email verification is required
         )
         db.session.add(new_user)
         db.session.commit()
-        login_user(new_user)
-        return redirect(url_for("get_all_posts"))
+
+        send_verification_email(new_user)
+
+
+        return redirect(url_for('verification_page', email=new_user.email))
 
     return render_template("register.html", form=user_form, current_user=current_user)
+
 
 
 @app.route('/login', methods=["GET", "POST"])
@@ -155,6 +242,10 @@ def login():
 
         if not user:
             flash("That email does not exist, please try again.")
+            return redirect(url_for('login'))
+
+        if not user.is_verified:
+            flash('Please verify your email before logging in.')
             return redirect(url_for('login'))
 
         # Check if the user signed up via Google
@@ -206,9 +297,11 @@ def authorize():
             # If the user exists, check if they are registered via Google
             if not user.google_registered:  # Check if the user is already registered via Google
                 user.google_registered = True  # Update the field
+                user.is_verified = True
                 print(f"Updating user {user.email} to have google_registered = True")
                 db.session.commit()  # Save changes
             else:
+                login_user(user)
                 print(f"User {user.email} is already registered with Google.")
         else:
             # Register a new user if they do not exist
@@ -216,7 +309,8 @@ def authorize():
                 email=user_email,
                 name=user_info.get('name'),
                 password=generate_password_hash('default_password', method='pbkdf2:sha256:600000', salt_length=8),
-                google_registered = True
+                google_registered = True,
+                is_verified= True
             )
             db.session.add(new_user)
             db.session.commit()
