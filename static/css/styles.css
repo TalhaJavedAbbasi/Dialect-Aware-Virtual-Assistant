@@ -10675,8 +10675,11 @@ header.masthead {
   padding-bottom: 8rem;
   background: no-repeat center center;
   background-color: #6c757d;
-  background-size: cover;
+  background-size: cover;;
   background-attachment: scroll;
+  height: 80vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  background-blend-mode: overlay;
 }
 header.masthead:before {
   content: "";

@@ -10,7 +10,7 @@ from sqlalchemy.orm import relationship, DeclarativeBase, Mapped, mapped_column
 from sqlalchemy import Integer, String, Text, text
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
-from forms import CreatePostForm, LoginForm, RegisterForm, CommentForm
+from forms import CreatePostForm, LoginForm, RegisterForm, CommentForm, ResetPasswordForm, ForgotPasswordForm
 from flask_mail import Mail, Message
 import jwt
 import os
@@ -289,6 +289,74 @@ def login():
             return redirect(url_for('get_all_posts'))
 
     return render_template("login.html", form=form, current_user=current_user)
+
+def generate_reset_token(user, expires_in=3600):  # Token expires in 1 hour
+    return jwt.encode(
+        {'reset_password': user.id, 'exp': datetime.now(timezone.utc) + timedelta(seconds=expires_in)},
+        app.config['SECRET_KEY'],
+        algorithm='HS256'
+    )
+
+
+def send_reset_password_email(user):
+    token = generate_reset_token(user)
+    reset_link = url_for('reset_password', token=token, _external=True)
+
+    msg = Message('Password Reset Request', recipients=[user.email])
+    msg.body = f'''To reset your password, click the following link:
+{reset_link}
+
+If you did not make this request, please ignore this email.
+'''
+    mail.send(msg)
+    print(f"Password reset email sent to {user.email}")
+
+
+@app.route('/forgot_password', methods=["GET", "POST"])
+def forgot_password():
+    form = ForgotPasswordForm()
+
+    if form.validate_on_submit():
+        email = form.email.data
+        result = db.session.execute(db.select(User).where(User.email == email))
+        user = result.scalar()
+
+        if user:
+            send_reset_password_email(user)  # Send password reset email
+            flash("An email has been sent with instructions to reset your password.", "info")
+        else:
+            flash("No account found with that email.", "warning")
+
+        return redirect(url_for('login'))
+
+    return render_template('forgot_password.html', form=form)
+
+
+@app.route('/reset_password/<token>', methods=["GET", "POST"])
+def reset_password(token):
+    try:
+        SECRET_KEY = app.config['SECRET_KEY']
+        data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+        user_id = data['reset_password']
+        user = db.session.get(User, user_id)
+
+        form = ResetPasswordForm()
+
+        if form.validate_on_submit():
+            new_password = form.password.data
+            user.password = generate_password_hash(new_password, method='pbkdf2:sha256:600000', salt_length=8)
+            db.session.commit()
+            flash("Your password has been reset!", "success")
+            return redirect(url_for('login'))
+
+        return render_template('reset_password.html', form=form, token=token)
+
+    except jwt.ExpiredSignatureError:
+        flash("The password reset link has expired.", "danger")
+        return redirect(url_for('forgot_password'))
+    except jwt.InvalidTokenError:
+        flash("Invalid password reset link.", "danger")
+        return redirect(url_for('forgot_password'))
 
 
 @app.route('/assign_role/<int:user_id>', methods=["GET", "POST"])
