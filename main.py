@@ -4,7 +4,7 @@ from authlib.integrations.flask_client import OAuth
 from flask_bootstrap import Bootstrap5
 from flask_ckeditor import CKEditor
 from flask_gravatar import Gravatar
-from flask_login import UserMixin, login_user, LoginManager, current_user, logout_user
+from flask_login import UserMixin, login_user, LoginManager, current_user, logout_user, login_required
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship, DeclarativeBase, Mapped, mapped_column
 from sqlalchemy import Integer, String, Text, text
@@ -73,7 +73,8 @@ def send_verification_email(user):
         )
 
         # Use url_for with _external=True to generate the full URL for email verification
-        verification_link = 'http://127.0.0.1:5000/verify_email/' + token
+        verification_link = url_for('verify_email', token=token, _external=True)
+
 
         # Create the email message
         msg = Message('Email Verification', recipients=[user.email])
@@ -95,7 +96,7 @@ def verify_email(token):
         data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
         user_id = data['user_id']
 
-        user = User.query.get(user_id)  # Assuming User is your user model
+        user = db.session.get(User, user_id)  # Assuming User is your user model
         if user:
             if user.is_verified:
                 flash('Your email is already verified!', 'info')
@@ -115,10 +116,25 @@ def verify_email(token):
 
     return redirect(url_for('login'))  # Redirect to login page after verification
 
+
+@app.route('/resend_verification/<email>', methods=["POST"])
+def resend_verification(email):
+    # Fetch the user by email
+    result = db.session.execute(db.select(User).where(User.email == email))
+    user = result.scalar()
+
+    if user and not user.is_verified:
+        send_verification_email(user)
+    else:
+        flash("This email is already verified or does not exist.", 'warning')
+
+    return redirect(url_for('verification_page', email=user.email))
+
 @app.route('/verification')
 def verification_page():
-    user_email = request.args.get('email')  # Get the email from the query parameters
+    user_email = request.args.get('email')
     return render_template('verification.html', email=user_email)
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -128,12 +144,21 @@ def load_user(user_id):
 def admin_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        #If id is not 1 then return abort with 403 error
-        if current_user.id != 1:
+        if current_user.role != 'admin':
             return abort(403)
-        #Otherwise continue with the route function
         return f(*args, **kwargs)
     return decorated_function
+
+def role_required(role):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if current_user.role != role:
+                return abort(403)  # Forbidden if the role doesn't match
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
 # CREATE DATABASE
 class Base(DeclarativeBase):
     pass
@@ -164,6 +189,7 @@ class User(UserMixin, db.Model):
     name: Mapped[str] = mapped_column(String(250), nullable=False)
     google_registered: Mapped[bool] = mapped_column(db.Boolean, default=False)
     is_verified: Mapped[bool] = mapped_column(db.Boolean, default=False)
+    role: Mapped[str] = mapped_column(String(20), nullable=False, default='user')
     posts = relationship("BlogPost", back_populates="author")
     comments = relationship("Comment", back_populates="comment_author")
 
@@ -199,6 +225,7 @@ def register():
         user_email = user_form.email.data
         user_password = user_form.password.data
         user_name = user_form.name.data
+        role = 'user'
 
         # Check if the user already exists
         result = db.session.execute(db.select(User).where(User.email == user_email))
@@ -224,11 +251,10 @@ def register():
 
         send_verification_email(new_user)
 
-
+        flash('Registration successful! A verification email has been sent.', 'success')
         return redirect(url_for('verification_page', email=new_user.email))
 
     return render_template("register.html", form=user_form, current_user=current_user)
-
 
 
 @app.route('/login', methods=["GET", "POST"])
@@ -241,30 +267,47 @@ def login():
         user = result.scalar()
 
         if not user:
-            flash("That email does not exist, please try again.")
+            flash("That email does not exist, please try again or signup.", 'danger')
             return redirect(url_for('login'))
 
         if not user.is_verified:
-            flash('Please verify your email before logging in.')
-            return redirect(url_for('login'))
+            flash('Please verify your email before logging in.', 'danger')
+            return redirect(url_for('verification_page', email=email))
 
         # Check if the user signed up via Google
         elif user.google_registered:
-            flash('You registered using Google sign-in. Please use Google to log in.')
+            flash('You registered using Google sign-in. Please use Google to log in.', 'info')
             return redirect(url_for('login'))
 
         # Password check for non-Google users
         elif not check_password_hash(user.password, password):
-            flash('Password incorrect, please try again.')
+            flash('Password incorrect, please try again.', 'danger')
             return redirect(url_for('login'))
         else:
             login_user(user)
+            flash('Logged in successfully!', 'success')
             return redirect(url_for('get_all_posts'))
 
     return render_template("login.html", form=form, current_user=current_user)
 
 
-## Google OAuth login route
+@app.route('/assign_role/<int:user_id>', methods=["GET", "POST"])
+@login_required
+@admin_only  # Ensure only admins can access this route
+def assign_role(user_id):
+    user = db.get_or_404(User, user_id)
+
+    if request.method == "POST":
+        new_role = request.form.get('role')  # Get the new role from the form
+        user.role = new_role
+        db.session.commit()
+        flash(f"Role for {user.name} updated to {new_role}", 'success')
+        return redirect(url_for('get_all_posts'))
+
+    return render_template('assign_role.html', user=user)
+
+
+# Google OAuth login route
 @app.route('/login/google')
 def google_login():
     redirect_uri = url_for('authorize', _external=True)
@@ -279,7 +322,7 @@ def authorize():
         token = google.authorize_access_token()
 
         if not token:
-            flash("Authorization failed.")
+            flash("Authorization failed.", 'danger')
             return redirect(url_for('login'))
 
         # Fetch user info from Google's userinfo endpoint
@@ -300,9 +343,11 @@ def authorize():
                 user.is_verified = True
                 print(f"Updating user {user.email} to have google_registered = True")
                 db.session.commit()  # Save changes
+                flash("You have successfully registered using Google!", 'success')
             else:
                 login_user(user)
                 print(f"User {user.email} is already registered with Google.")
+                flash("You have successfully logged in using Google!", 'success')
         else:
             # Register a new user if they do not exist
             new_user = User(
@@ -315,17 +360,18 @@ def authorize():
             db.session.add(new_user)
             db.session.commit()
             login_user(new_user)
-
+            flash("You have successfully signed up using Google!", 'success')
         return redirect(url_for('get_all_posts'))
 
     except Exception as e:
-        flash(f"An error occurred: {str(e)}")
+        flash(f"An error occurred: {str(e)}", 'danger')
         return redirect(url_for('login'))
 
 
 @app.route('/logout')
 def logout():
     logout_user()
+    flash("You have successfully logged out.","success")
     return redirect(url_for('get_all_posts'))
 
 @app.route('/')

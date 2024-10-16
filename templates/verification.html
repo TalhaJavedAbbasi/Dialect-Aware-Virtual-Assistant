@@ -38,6 +38,30 @@
         .resend-link:hover {
             text-decoration: underline;
         }
+
+        /* Button Styling */
+        button {
+            background: linear-gradient(90deg, #007bff, #0056b3);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        button:hover {
+            background: linear-gradient(90deg, #0056b3, #003f7f);
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 <body>
@@ -51,7 +75,9 @@
         </div>
 
         <p>If you haven't received the email:</p>
-        <a href="{{ resend_verification_link }}" class="resend-link">Click here to resend the verification email</a>
+        <form action="{{ url_for('resend_verification', email=email) }}" method="POST">
+            <button type="submit">Click Here To Resend Verification Email</button>
+        </form>
     </div>
 </body>
 </html>

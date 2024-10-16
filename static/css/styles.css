@@ -10853,3 +10853,27 @@ header.masthead .post-heading .meta a {
   color: #ee6f57;
   text-align: center;
 }
+.flashes {
+        margin: 80px auto;
+        width: 50%;
+        z-index: 1050;
+        position: fixed; /* Position relative for z-index to take effect */
+      }
+.alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+    border-radius: 5px;
+}
+
+.alert-success {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.alert-warning {
+    color: #856404;
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+}
