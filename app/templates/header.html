@@ -62,7 +62,7 @@
             <li class="nav-item">
               <a
                 class="nav-link px-lg-3 py-3 py-lg-4"
-                href="{{ url_for('get_all_posts') }}"
+                href="{{ url_for('blog.get_all_posts') }}"
                 >Home</a
               >
             </li>
@@ -71,14 +71,14 @@
             <li class="nav-item">
               <a
                 class="nav-link px-lg-3 py-3 py-lg-4"
-                href="{{ url_for('login') }}"
+                href="{{ url_for('auth.login') }}"
                 >Login</a
               >
             </li>
             <li class="nav-item">
               <a
                 class="nav-link px-lg-3 py-3 py-lg-4"
-                href="{{ url_for('register') }}"
+                href="{{ url_for('auth.register') }}"
                 >Register</a
               >
             </li>
@@ -86,7 +86,7 @@
             <li class="nav-item">
               <a
                 class="nav-link px-lg-3 py-3 py-lg-4"
-                href="{{ url_for('logout') }}"
+                href="{{ url_for('auth.logout') }}"
                 >Log Out</a
               >
             </li>
@@ -94,20 +94,20 @@
             <li class="nav-item">
               <a
                 class="nav-link px-lg-3 py-3 py-lg-4"
-                href="{{ url_for('about') }}"
+                href="{{ url_for('routes.about') }}"
                 >About</a
               >
             </li>
             <li class="nav-item">
               <a
                 class="nav-link px-lg-3 py-3 py-lg-4"
-                href="{{ url_for('contact') }}"
+                href="{{ url_for('routes.contact') }}"
                 >Contact</a
               >
             </li>
             {% if current_user.is_authenticated and current_user.role == 'admin' %}
             <li class="nav-item">
-              <a class="nav-link px-lg-3 py-3 py-lg-4" href="{{ url_for('assign_role') }}">Assign Role</a>
+              <a class="nav-link px-lg-3 py-3 py-lg-4" href="{{ url_for('roles.assign_role') }}">Assign Role</a>
             </li>
             {% endif %}
           </ul>

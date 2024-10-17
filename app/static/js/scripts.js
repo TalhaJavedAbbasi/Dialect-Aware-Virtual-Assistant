@@ -27,3 +27,17 @@ window.addEventListener('DOMContentLoaded', () => {
         scrollPos = currentTop;
     });
 })
+
+document.getElementById('show_password').onclick = function() {
+      var passwordField = document.getElementById('password');
+      var confirmPassword = document.getElementById('confirm_password');
+      if (this.checked) {
+          passwordField.type = 'text';
+          confirmPassword.type = 'text';
+      } else {
+          passwordField.type = 'password';
+          confirmPassword.type = 'password';
+      }
+  };
+
+

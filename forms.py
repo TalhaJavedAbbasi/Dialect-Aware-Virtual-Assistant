@@ -4,7 +4,7 @@ from wtforms.fields.choices import SelectField
 from wtforms.fields.simple import BooleanField
 from wtforms.validators import DataRequired, URL, Email, Regexp, EqualTo
 from flask_ckeditor import CKEditorField
-from models import User
+from app.models import User
 
 
 # WTForm for creating a blog post

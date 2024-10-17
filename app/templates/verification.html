@@ -75,7 +75,7 @@
         </div>
 
         <p>If you haven't received the email:</p>
-        <form action="{{ url_for('resend_verification', email=email) }}" method="POST">
+        <form action="{{ url_for('auth.resend_verification', email=email) }}" method="POST">
             <button type="submit">Click Here To Resend Verification Email</button>
         </form>
     </div>
