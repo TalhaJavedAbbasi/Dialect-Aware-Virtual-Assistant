@@ -1,9 +1,27 @@
-<form method="POST">
-    <label for="role">Assign Role:</label>
-    <select name="role" id="role">
-        <option value="user">User</option>
-        <option value="admin">Admin</option>
-        <option value="guest">Guest</option>
-    </select>
-    <button type="submit">Update Role</button>
-</form>
+{% from "bootstrap5/form.html" import render_form %} {% block content %} {%
+include "header.html" %}
+
+<!-- Page Header -->
+<header
+  class="masthead"
+  style="background-image: url('static/assets/img/assign_role-bg.png')"
+>
+</header>
+
+<main class="mb-4">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+       <form method="POST" action="{{ url_for('assign_role') }}">
+        {{ render_form(form, novalidate=True, button_map={"submit": "primary"}) }}
+        </form>
+
+      </div>
+
+
+    </div>
+  </div>
+</main>
+
+{% include "footer.html" %} {% endblock %}
+

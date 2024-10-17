@@ -10855,18 +10855,23 @@ header.masthead .post-heading .meta a {
 .flash {
   color: #ee6f57;
   text-align: center;
+
 }
 .flashes {
-        margin: 80px auto;
-        width: 50%;
-        z-index: 1050;
-        position: fixed; /* Position relative for z-index to take effect */
-      }
+    margin: 70px auto; /* Centers the flash message container */
+    width: 40%; /* Adjust width as needed */
+    z-index: 1050;
+    position: fixed; /* Keep it fixed on the page */
+    left: 50%; /* Center horizontally */
+    transform: translateX(-50%); /* Center alignment */
+}
+
 .alert {
-    padding: 15px;
+    padding: 15px 50px 15px 15px; /* Ensure space for the close button */
     margin-bottom: 20px;
     border: 1px solid transparent;
     border-radius: 5px;
+    position: relative; /* Positioning context for absolute elements */
 }
 
 .alert-success {
@@ -10879,4 +10884,42 @@ header.masthead .post-heading .meta a {
     color: #856404;
     background-color: #fff3cd;
     border-color: #ffeeba;
+}
+
+/* Optional: Add classes for other alert types */
+.alert-danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.alert-info {
+    color: #0c5460;
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+}
+
+/* Custom class to remove margin */
+.no-margin-top {
+    margin-top: 0 !important; /* Reset margin */
+}
+
+/* Optional: Fade out alerts automatically */
+@keyframes fadeOut {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+.alert.fade-out {
+    animation: fadeOut 0.5s forwards; /* Trigger fade-out animation */
+}
+
+.btn-close:hover {
+    color: #ff0000; /* Red color on hover */
+}
+
+@media (max-width: 768px) {
+    .flashes {
+        width: 80%; /* Wider on smaller screens */
+    }
 }

@@ -1,8 +1,10 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField
+from wtforms.fields.choices import SelectField
 from wtforms.fields.simple import BooleanField
 from wtforms.validators import DataRequired, URL, Email, Regexp, EqualTo
 from flask_ckeditor import CKEditorField
+from models import User
 
 
 # WTForm for creating a blog post
@@ -55,3 +57,13 @@ class ResetPasswordForm(FlaskForm):
     ])
     show_password = BooleanField('Show Password')
     submit = SubmitField("Reset Password")
+
+
+class AssignRoleForm(FlaskForm):
+    user = SelectField('Select User', choices=[], coerce=int, validators=[DataRequired()])
+    role = SelectField('Assign Role', choices=[('user', 'User'), ('admin', 'Admin'), ('guest', 'Guest')], validators=[DataRequired()])
+    submit = SubmitField('Update Role')
+
+    def __init__(self, *args, **kwargs):
+        super(AssignRoleForm, self).__init__(*args, **kwargs)
+        self.user.choices = [(user.id, user.email) for user in User.query.all()]  # Fetch user list

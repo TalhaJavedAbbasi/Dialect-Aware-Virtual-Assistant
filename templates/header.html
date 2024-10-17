@@ -105,21 +105,51 @@
                 >Contact</a
               >
             </li>
+            {% if current_user.is_authenticated and current_user.role == 'admin' %}
+            <li class="nav-item">
+              <a class="nav-link px-lg-3 py-3 py-lg-4" href="{{ url_for('assign_role') }}">Assign Role</a>
+            </li>
+            {% endif %}
           </ul>
         </div>
       </div>
     </nav>
-  {% with messages = get_flashed_messages(with_categories=true) %}
+{% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-      <div class="flashes">
-        {% for category, message in messages %}
-          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>
-        {% endfor %}
+      <div class="container no-margin-top mt-4">
+        <div class="flashes">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+              {% if category == 'success' %}
+                <i class="fas fa-check-circle me-2"></i>
+              {% elif category == 'danger' %}
+                <i class="fas fa-exclamation-triangle me-2"></i>
+              {% elif category == 'warning' %}
+                <i class="fas fa-exclamation-circle me-2"></i>
+              {% elif category == 'info' %}
+                <i class="fas fa-info-circle me-2"></i>
+              {% endif %}
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        </div>
       </div>
     {% endif %}
-  {% endwith %}
+{% endwith %}
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+        setTimeout(() => {
+            alert.classList.add('fade-out');
+            setTimeout(() => {
+                alert.remove(); // Remove from DOM after fade out
+            }, 500); // Match this with your CSS transition duration
+        }, 5000); // Time in milliseconds before automatic dismissal (e.g., 5000ms = 5 seconds)
+    });
+});
+
+    </script>
   </body>
 </html>

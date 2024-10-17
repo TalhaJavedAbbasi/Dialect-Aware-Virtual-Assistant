@@ -4,13 +4,12 @@ from authlib.integrations.flask_client import OAuth
 from flask_bootstrap import Bootstrap5
 from flask_ckeditor import CKEditor
 from flask_gravatar import Gravatar
-from flask_login import UserMixin, login_user, LoginManager, current_user, logout_user, login_required
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import relationship, DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import Integer, String, Text, text
+from flask_login import login_user, LoginManager, current_user, logout_user
+from models import BlogPost, User, Comment, db
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
-from forms import CreatePostForm, LoginForm, RegisterForm, CommentForm, ResetPasswordForm, ForgotPasswordForm
+from forms import CreatePostForm, LoginForm, RegisterForm, CommentForm, ResetPasswordForm, ForgotPasswordForm, \
+    AssignRoleForm
 from flask_mail import Mail, Message
 import jwt
 import os
@@ -159,49 +158,10 @@ def role_required(role):
         return decorated_function
     return decorator
 
+
 # CREATE DATABASE
-class Base(DeclarativeBase):
-    pass
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DB_URI", "sqlite:///posts.db")
-db = SQLAlchemy(model_class=Base)
 db.init_app(app)
-
-
-# CONFIGURE TABLES
-class BlogPost(db.Model):
-    __tablename__ = "blog_posts"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    author_id: Mapped[int] = mapped_column(Integer, db.ForeignKey("users.id"))
-    author = relationship("User", back_populates="posts")
-    title: Mapped[str] = mapped_column(String(250), unique=True, nullable=False)
-    subtitle: Mapped[str] = mapped_column(String(250), nullable=False)
-    date: Mapped[str] = mapped_column(String(250), nullable=False)
-    body: Mapped[str] = mapped_column(Text, nullable=False)
-    img_url: Mapped[str] = mapped_column(String(250), nullable=False)
-    comments = relationship("Comment", back_populates="parent_post")
-
-
-class User(UserMixin, db.Model):
-    __tablename__ = "users"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    email: Mapped[str] = mapped_column(String(250), unique=True, nullable=False)
-    password: Mapped[str] = mapped_column(String(250), nullable=False)
-    name: Mapped[str] = mapped_column(String(250), nullable=False)
-    google_registered: Mapped[bool] = mapped_column(db.Boolean, default=False)
-    is_verified: Mapped[bool] = mapped_column(db.Boolean, default=False)
-    role: Mapped[str] = mapped_column(String(20), nullable=False, default='user')
-    posts = relationship("BlogPost", back_populates="author")
-    comments = relationship("Comment", back_populates="comment_author")
-
-
-class Comment(db.Model):
-    __tablename__ = "comments"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    text: Mapped[str] = mapped_column(Text, nullable=False)
-    author_id: Mapped[int] = mapped_column(Integer, db.ForeignKey("users.id"))
-    comment_author = relationship("User", back_populates="comments")
-    post_id: Mapped[str] = mapped_column(Integer, db.ForeignKey("blog_posts.id"))
-    parent_post = relationship("BlogPost", back_populates="comments")
 
 
 with app.app_context():
@@ -359,20 +319,28 @@ def reset_password(token):
         return redirect(url_for('forgot_password'))
 
 
-@app.route('/assign_role/<int:user_id>', methods=["GET", "POST"])
-@login_required
-@admin_only  # Ensure only admins can access this route
-def assign_role(user_id):
-    user = db.get_or_404(User, user_id)
+@app.route('/assign-role', methods=["GET", "POST"])
+@admin_only  # Ensure only admin users can access
+def assign_role():
+    form = AssignRoleForm()
 
-    if request.method == "POST":
-        new_role = request.form.get('role')  # Get the new role from the form
-        user.role = new_role
-        db.session.commit()
-        flash(f"Role for {user.name} updated to {new_role}", 'success')
-        return redirect(url_for('get_all_posts'))
+    if form.validate_on_submit():
+        user_id = form.user.data
+        selected_role = form.role.data
 
-    return render_template('assign_role.html', user=user)
+        # Fetch the user from the database
+        user = User.query.get(user_id)
+        if user:
+            # Update the role
+            user.role = selected_role
+            db.session.commit()  # Save changes to the database
+            flash(f'Role for {user.email} updated to {selected_role}!', 'success')
+        else:
+            flash('User not found', 'danger')
+
+        return redirect(url_for('assign_role'))
+
+    return render_template('assign_role.html', form=form)
 
 
 # Google OAuth login route
@@ -455,7 +423,7 @@ def show_post(post_id):
     comment_form = CommentForm()
     if comment_form.validate_on_submit():
         if not current_user.is_authenticated:
-            flash("You need to login or register to comment.")
+            flash("You need to login or register to comment.", "danger")
             return redirect(url_for("login"))
 
         new_comment = Comment(
