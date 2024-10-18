@@ -37,7 +37,6 @@ def send_verification_email(user):
     except Exception as e:
         print(f"Error sending verification email: {str(e)}")
 
-# Other functions like `reset_password` and `forgot_password` routes...
 
 def generate_reset_token(user, expires_in=3600):  # Token expires in 1 hour
     return jwt.encode(
@@ -71,7 +70,7 @@ def forgot_password():
 
         if user:
             send_reset_password_email(user)  # Send password reset email
-            flash("An email has been sent with instructions to reset your password.", "info")
+            flash("An email has been sent with instructions to reset your password.Please check your inbox.", "info")
         else:
             flash("No account found with that email.", "warning")
 
