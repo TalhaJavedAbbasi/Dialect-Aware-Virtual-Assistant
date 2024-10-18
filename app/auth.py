@@ -62,7 +62,7 @@ def register():
 
         send_verification_email(new_user)
 
-        flash('Registration successful! A verification email has been sent.', 'success')
+        #flash('Registration successful! A verification email has been sent.', 'success')
         return redirect(url_for('auth.verification_page', email=new_user.email))
 
     return render_template("register.html", form=user_form, current_user=current_user)
@@ -118,7 +118,7 @@ def verify_email(token):
                 user.is_verified = True
                 db.session.commit()
                 login_user(user)
-                flash('Your email has been verified!', 'success')
+                flash(f'Welcome {user.name}! Your email has been verified!', 'success')
         else:
             flash('Verification link is invalid or has expired.', 'danger')
 
