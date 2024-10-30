@@ -127,7 +127,7 @@ def verify_email(token):
     except jwt.InvalidTokenError:
         flash('Invalid verification link. Please try again.', 'danger')
 
-    return redirect(url_for('auth.login'))  # Redirect to login page after verification
+    return redirect(url_for('blog.get_all_posts'))  # Redirect to login page after verification
 
 
 @auth_bp.route('/resend_verification/<email>', methods=["POST"])

@@ -70,11 +70,11 @@ def forgot_password():
 
         if user:
             send_reset_password_email(user)  # Send password reset email
-            flash("An email has been sent with instructions to reset your password.Please check your inbox.", "info")
+            flash("An email has been sent with instructions to reset your password.Please check your inbox. If you didn't get the link enter your email below to resend the link.", "info")
         else:
             flash("No account found with that email.", "warning")
 
-        return redirect(url_for('auth.login'))
+        return redirect(url_for('email.forgot_password'))
 
     return render_template('forgot_password.html', form=form)
 
