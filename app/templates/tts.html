@@ -1,0 +1,59 @@
+<!-- templates/tts.html -->
+{% from "bootstrap5/form.html" import render_form %}
+{% block content %}
+{% include "header.html" %}
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tts.css') }}">
+  </head>
+<header class="masthead" style="background-image: url('static/assets/img/login-bg.png')">
+    <div class="container position-relative px-4 px-lg-5">
+        <div class="row gx-4 gx-lg-5 justify-content-center">
+            <div class="col-md-10 col-lg-8 col-xl-7">
+                <div class="page-heading">
+                    <h1>Text to Speech</h1>
+                    <span class="subheading">Convert text to speech.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="container my-5">
+    <div class="container my-5">
+    <div class="wrapper">
+        <header>Text To Speech (Accents)</header>
+        <form action="#">
+            <div class="row">
+                <label>Enter Text</label>
+                <textarea></textarea>
+            </div>
+            <div class="row">
+                <label>Select Voice Accent</label>
+                <select id="voiceList">
+                    <option value="en_US">English (US)</option>
+                    <option value="en_UK">English (UK)</option>
+                    <option value="en_AU">English (Australian)</option>
+                    <option value="ur_PK">Urdu (Pakistan)</option>
+                </select>
+            </div>
+            <button id="speechButton">Convert To Speech &nbsp;<i class="fa-solid fa-headphones"></i></button>
+        </form>
+        <div class="footer">
+            <a class="footer-text" target="_blank" href="https://myskypower.net">By My Sky Power</a>
+        </div>
+    </div>
+
+    <!-- Modal for Error Messages -->
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <p id="modalText"></p>
+        </div>
+    </div>
+</div>
+</main>
+
+<script src="{{ url_for('static', filename='js/tts.js') }}"></script>
+
+{% include "footer.html" %}
+{% endblock %}
