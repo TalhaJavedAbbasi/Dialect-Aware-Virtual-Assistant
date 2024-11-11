@@ -1,0 +1,103 @@
+  {% from "bootstrap5/form.html" import render_form %}
+  {% block content %}
+  {% include "header.html" %}
+
+  <!-- Page Header -->
+  <header
+    class="masthead"
+    style="background-image: url('static/assets/img/login-bg.png')"
+  >
+    <div class="container position-relative px-4 px-lg-5">
+      <div class="row gx-4 gx-lg-5 justify-content-center">
+        <div class="col-md-10 col-lg-8 col-xl-7">
+          <div class="page-heading">
+            <h1>Speech to Text</h1>
+            <span class="subheading">Convert your speech to text using voice commands.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container my-5">
+
+    <div class="text-center mt-3">
+      <h4>Select Accent</h4>
+      <select id="accent-select" class="form-select form-select-sm" style="max-width: 200px; margin: 0 auto;">
+        <option value="en-US">American English</option>
+        <option value="en-UK">British English</option>
+        <option value="en-AU">Australian English</option>
+        <option value="en-UR">Urdu-English</option>
+<!--        <option value="en-IN">Indian English</option>-->
+
+        <!-- Add more accents as needed -->
+      </select>
+    </div>
+    <div class="text-center mt-3">
+  <h4>Select Transcription Approach</h4>
+  <select id="approach-select" class="form-select form-select-sm" style="max-width: 200px; margin: 0 auto;">
+    <option value="whisper">Whisper (Local)</option>
+    <option value="sr">SpeechRecognition (API)</option>
+  </select>
+</div>
+    <!-- Control Section -->
+    <div class="text-center">
+      <div class="btn-group" role="group" aria-label="Recording Controls">
+        <button id="start-btn" class="btn btn-outline-primary me-2">
+          <i class="fas fa-microphone"></i> Start Recording
+        </button>
+        <button id="pause-btn" class="btn btn-outline-warning me-2" disabled>
+          <i class="fas fa-pause"></i> Pause Recording
+        </button>
+        <button id="resume-btn" class="btn btn-outline-success me-2" disabled>
+          <i class="fas fa-play"></i> Resume Recording
+        </button>
+        <button id="stop-btn" class="btn btn-outline-danger" disabled>
+          <i class="fas fa-stop"></i> Stop Recording
+        </button>
+      </div>
+    </div>
+
+    <!-- Upload Section -->
+    <div class="text-center mt-5">
+      <h2>Upload Audio File</h2>
+      <form class="d-inline-flex justify-content-center align-items-center">
+        <input type="file" id="file-input" accept="audio/*" class="form-control form-control-sm me-2" style="max-width: 300px;">
+        <button id="upload-btn" class="btn btn-outline-info btn-sm">
+          <i class="fas fa-upload"></i> Upload Audio
+        </button>
+      </form>
+    </div>
+
+    <!-- Toast Container -->
+
+    <div id="toast-container" aria-live="polite" aria-atomic="true" class="position-fixed top-0 end-0 p-3">
+      <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+          <strong class="me-auto">Notification</strong>
+          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div id="toast-body" class="toast-body">
+          Your message will appear here.
+        </div>
+      </div>
+    </div>
+
+    <div id="loading-spinner" class="text-center mt-3 d-none">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Processing...</span>
+      </div>
+      <p>Processing audio, please wait...</p>
+    </div>
+
+    <!-- Transcription Display -->
+    <div class="text-center mt-5">
+      <h3>Transcription</h3>
+      <div id="transcription" class="p-3 border bg-light">
+        <p>Your speech transcription will appear here.</p>
+      </div>
+    </div>
+  </main>
+
+  {% include "footer.html" %}
+  {% endblock %}

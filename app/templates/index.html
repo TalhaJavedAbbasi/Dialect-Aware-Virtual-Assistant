@@ -9,52 +9,52 @@
     <div class="row gx-4 gx-lg-5 justify-content-center">
       <div class="col-md-10 col-lg-8 col-xl-7">
         <div class="site-heading">
-          <h1>Talha Javed Blog</h1>
-          <span class="subheading">Exploring the World of Python Programming and Beyond.</span>
+          <h2>Dialect-Aware Virtual Assistant</h2>
+          <span class="subheading">Bridging Communication through Multilingual Speech and Language Technologies.</span>
         </div>
       </div>
     </div>
   </div>
 </header>
 <!-- Main Content-->
-<div class="container px-4 px-lg-5">
-  <div class="row gx-4 gx-lg-5 justify-content-center">
-    <div class="col-md-10 col-lg-8 col-xl-7">
-      <!-- Post preview-->
-      {% for post in all_posts %}
-      <div class="post-preview">
-        <a href="{{ url_for('blog.show_post', post_id=post.id) }}">
-          <h2 class="post-title">{{ post.title }}</h2>
-          <h3 class="post-subtitle">{{ post.subtitle }}</h3>
-        </a>
-        <p class="post-meta">
-          Posted by
-          <a href="#">{{post.author.name}}</a>
-          on {{post.date}}
+<!--<div class="container px-4 px-lg-5">-->
+<!--  <div class="row gx-4 gx-lg-5 justify-content-center">-->
+<!--    <div class="col-md-10 col-lg-8 col-xl-7">-->
+<!--      &lt;!&ndash; Post preview&ndash;&gt;-->
+<!--      {% for post in all_posts %}-->
+<!--      <div class="post-preview">-->
+<!--        <a href="{{ url_for('blog.show_post', post_id=post.id) }}">-->
+<!--          <h2 class="post-title">{{ post.title }}</h2>-->
+<!--          <h3 class="post-subtitle">{{ post.subtitle }}</h3>-->
+<!--        </a>-->
+<!--        <p class="post-meta">-->
+<!--          Posted by-->
+<!--          <a href="#">{{post.author.name}}</a>-->
+<!--          on {{post.date}}-->
 
-          <a href="{{url_for('blog.delete_post', post_id=post.id) }}">✘</a>
-        </p>
-      </div>
-      <!-- Divider-->
-      <hr class="my-4" />
-      {% endfor %}
+<!--          <a href="{{url_for('blog.delete_post', post_id=post.id) }}">✘</a>-->
+<!--        </p>-->
+<!--      </div>-->
+<!--      &lt;!&ndash; Divider&ndash;&gt;-->
+<!--      <hr class="my-4" />-->
+<!--      {% endfor %}-->
 
-      <!-- New Post -->
-      {% if current_user.id == 1 %}
-      <div class="d-flex justify-content-end mb-4">
-        <a
-          class="btn btn-primary float-right"
-          href="{{url_for('blog.add_new_post')}}"
-          >Create New Post</a
-        >
-      </div>
-      {% endif %}
-      <!-- Pager-->
-      <div class="d-flex justify-content-end mb-4">
-        <a class="btn btn-secondary text-uppercase" href="#!">Older Posts →</a>
-      </div>
-    </div>
-  </div>
-</div>
+<!--      &lt;!&ndash; New Post &ndash;&gt;-->
+<!--      {% if current_user.id == 1 %}-->
+<!--      <div class="d-flex justify-content-end mb-4">-->
+<!--        <a-->
+<!--          class="btn btn-primary float-right"-->
+<!--          href="{{url_for('blog.add_new_post')}}"-->
+<!--          >Create New Post</a-->
+<!--        >-->
+<!--      </div>-->
+<!--      {% endif %}-->
+<!--      &lt;!&ndash; Pager&ndash;&gt;-->
+<!--      <div class="d-flex justify-content-end mb-4">-->
+<!--        <a class="btn btn-secondary text-uppercase" href="#!">Older Posts →</a>-->
+<!--      </div>-->
+<!--    </div>-->
+<!--  </div>-->
+<!--</div>-->
 
 {% include "footer.html" %}

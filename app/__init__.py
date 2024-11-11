@@ -52,6 +52,8 @@ def create_app():
     from .roles import roles_bp
     from .routes import routes_bp
     from .blog import blog_bp
+    from app.stt import stt_bp
+    from .tts import tts_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(oauth_bp)
@@ -59,5 +61,7 @@ def create_app():
     app.register_blueprint(roles_bp)
     app.register_blueprint(routes_bp)
     app.register_blueprint(blog_bp)
+    app.register_blueprint(stt_bp, url_prefix='/stt')
+    app.register_blueprint(tts_bp)
 
     return app
