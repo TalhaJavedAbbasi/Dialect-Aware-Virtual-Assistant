@@ -11016,8 +11016,41 @@ header.masthead .post-heading .meta a {
 }
 
 
-
 #transcription {
   min-height: 150px;
   font-size: 1.1rem;
+}
+
+/* Wrapper for the entire wave container to add a bobbing effect */
+.bobbing-container {
+    animation: bobbing 2s ease-in-out infinite;
+}
+
+
+/* Styling the wave container */
+.wave-container {
+    display: flex;
+    gap: 3px;
+    justify-content: center;
+}
+
+/* Each bar in the wave */
+.wave-bar {
+    width: 6px;
+    background-color: #4CAF50;
+    border-radius: 4px;
+    animation: wave 1s ease-in-out infinite;
+    animation-delay: calc(var(--i) * -0.1s);
+}
+
+/* Animation keyframes for wave effect on each bar */
+@keyframes wave {
+    0%, 100% { height: 20px; }
+    50% { height: 60px; }
+}
+
+/* Animation keyframes for bobbing up and down */
+@keyframes bobbing {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); } /* Adjust for more/less movement */
 }
