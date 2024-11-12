@@ -6,7 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from .models import User
 from forms import RegisterForm, LoginForm
 from app import login_manager, db
-from .email import send_verification_email
+from .app_email import send_verification_email
 import jwt
 
 auth_bp = Blueprint('auth', __name__)

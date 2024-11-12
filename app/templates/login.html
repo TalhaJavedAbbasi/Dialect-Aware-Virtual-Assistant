@@ -24,7 +24,7 @@ include "header.html" %}
       <div class="col-lg-8 col-md-10 mx-auto">
        {{render_form(form, novalidate=True, button_map={"submit": "primary"}) }}
         <div class="mt-2">
-          <a href="{{ url_for('email.forgot_password') }}">Forgot password?</a>
+          <a href="{{ url_for('app_email.forgot_password') }}">Forgot password?</a>
         </div>
 
         <div class="mt-3">

@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 from forms import ResetPasswordForm, ForgotPasswordForm
 from werkzeug.security import generate_password_hash
 
-email_bp = Blueprint('email', __name__)
+email_bp = Blueprint('app_email', __name__)
 
 
 def send_verification_email(user):
@@ -48,7 +48,7 @@ def generate_reset_token(user, expires_in=3600):  # Token expires in 1 hour
 
 def send_reset_password_email(user):
     token = generate_reset_token(user)
-    reset_link = url_for('email.reset_password', token=token, _external=True)
+    reset_link = url_for('app_email.reset_password', token=token, _external=True)
 
     msg = Message('Password Reset Request', recipients=[user.email])
     msg.body = f'''To reset your password, click the following link:
@@ -74,7 +74,7 @@ def forgot_password():
         else:
             flash("No account found with that email.", "warning")
 
-        return redirect(url_for('email.forgot_password'))
+        return redirect(url_for('app_email.forgot_password'))
 
     return render_template('forgot_password.html', form=form)
 
@@ -100,8 +100,8 @@ def reset_password(token):
 
     except jwt.ExpiredSignatureError:
         flash("The password reset link has expired.", "danger")
-        return redirect(url_for('email.forgot_password'))
+        return redirect(url_for('app_email.forgot_password'))
     except jwt.InvalidTokenError:
         flash("Invalid password reset link.", "danger")
-        return redirect(url_for('email.forgot_password'))
+        return redirect(url_for('app_email.forgot_password'))
 

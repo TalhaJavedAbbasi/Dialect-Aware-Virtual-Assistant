@@ -5,6 +5,8 @@ import librosa
 import soundfile as sf  # Import soundfile for saving audio
 import speech_recognition as sr
 from pydub import AudioSegment
+AudioSegment.ffmpeg = "C:\\ffmpeg\\bin\\ffmpeg.exe"
+AudioSegment.ffprobe = "C:\\ffmpeg\\bin\\ffprobe.exe"
 stt_bp = Blueprint('stt', __name__)
 
 # Load Whisper model (you can choose 'tiny', 'base', 'small', 'medium', 'large')
