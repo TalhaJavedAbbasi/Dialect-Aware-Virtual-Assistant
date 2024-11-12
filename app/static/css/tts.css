@@ -7,21 +7,20 @@
   font-family: 'Poppins', sans-serif;
 }
 body{
-  display: flex;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: #6B5B95;
 }
 ::selection{
   color: #fff;
   background: #5256AD;
 }
 .wrapper{
+  margin: 0 auto;
   width: 550px;
   padding: 25px 30px;
   border-radius: 7px;
-  background: 	#FAF9F6;
+  background: #F1F1F1;
   box-shadow: 7px 7px 20px rgba(0,0,0,0.05);
 }
 .wrapper header{
@@ -196,4 +195,57 @@ border: 2px solid red;
   width: 380px;
 }
 
+}
+
+@media(max-width: 740px) {
+  .wrapper {
+    width: 90%;  /* Adjust width to 90% on smaller screens */
+  }
+}
+
+
+/* Waveform container styling within the header */
+.wave-container {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    position: absolute;
+    bottom: -10px; /* Offset to overlay slightly outside the header */
+    left: 0;
+    width: 100%;
+    opacity: 0.75; /* Add transparency to blend with the header */
+}
+
+/* Wave bar styling */
+.wave-bar {
+    width: 5px;
+    border-radius: 4px;
+    background-image: linear-gradient(to top, #4CAF50, #85e085);
+    animation: wave 1.2s ease-in-out infinite;
+    animation-delay: calc(var(--i) * -0.1s);
+}
+
+/* Wave animation */
+@keyframes wave {
+    0%, 100% { height: 15px; }
+    50% { height: 60px; }
+}
+
+/* Bobbing effect for the wave container */
+.bobbing-container {
+    animation: bobbing 2s ease-in-out infinite;
+}
+
+/* Animation keyframes for bobbing */
+@keyframes bobbing {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+}
+
+.header {
+    position: relative; /* Position the header container to allow absolute positioning of the wave */
+    padding-bottom: 50px; /* Extra padding for visual balance */
+    text-align: center;
+    background-color: #333; /* Or use an image or gradient background */
+    color: #fff;
 }
