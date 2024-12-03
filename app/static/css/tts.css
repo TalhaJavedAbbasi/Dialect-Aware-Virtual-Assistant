@@ -250,6 +250,7 @@ border: 2px solid red;
     color: #fff;
 }
 
+
 body.dark-theme .wrapper {
     background-color: #333333 !important;
     color: #ffffff !important;
@@ -258,5 +259,15 @@ body.dark-theme .wrapper {
 .header.dark-theme {
     background-color: #000000;
     color: #ffffff;
+
+.highlighted-word {
+    font-weight: normal;
+    color: black;
+}
+
+.active-word {
+    font-weight: bold;
+    color: blue;
+
 }
 

@@ -5,6 +5,45 @@ const textarea = document.querySelector("textarea"),
       modalText = document.querySelector("#modalText"),
       span = document.getElementsByClassName("close")[0];
 
+const audioPlayer = document.getElementById("audioPlayer");
+const downloadLink = document.getElementById("downloadLink");
+const audioContainer = document.querySelector(".audio-container");
+const dotsButton = document.querySelector(".dots-button");
+const dropdownMenu = document.querySelector(".dropdown-menu");
+
+
+// Function to split text and wrap each word in a span tag
+function displayTextWithHighlighting(text) {
+    const words = text.trim().split(" ");
+    const container = document.getElementById("highlightedTextContainer");
+    container.innerHTML = ""; // Clear previous content
+
+    words.forEach((word, index) => {
+        const span = document.createElement("span");
+        span.id = `word-${index}`;
+        span.className = "highlighted-word";
+        span.textContent = word + " "; // Add a space after each word
+        container.appendChild(span);
+    });
+}
+
+// Function to highlight the word based on audio playback time
+function highlightCurrentWord() {
+    const currentTime = audio.currentTime;
+    const durationPerWord = audio.duration / textarea.value.split(" ").length;
+    const currentWordIndex = Math.floor(currentTime / durationPerWord);
+
+    // Remove active class from previous highlighted word
+    document.querySelectorAll(".highlighted-word").forEach(word => {
+        word.classList.remove("active-word");
+    });
+
+    // Add active class to current word
+    const currentWord = document.getElementById(`word-${currentWordIndex}`);
+    if (currentWord) currentWord.classList.add("active-word");
+}
+
+
 let audio = new Audio(),
     isPlaying = false,
     isPaused = false;
@@ -51,6 +90,16 @@ speechBtn.addEventListener("click", (e) => {
     audio.currentTime = 0; // Reset playback time to the beginning
     textToSpeech();
 });
+speechBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    const text = textarea.value.trim();
+    if (text) {
+        displayTextWithHighlighting(text);  // Initialize word highlighting
+    }
+});
+
+// Bind the highlight function to the audio timeupdate event
+audio.addEventListener("timeupdate", highlightCurrentWord);
 
 function textToSpeech() {
     const text = textarea.value;
@@ -74,6 +123,13 @@ function textToSpeech() {
             isPlaying = true;
             isPaused = false;
             updateButtonStyle();
+
+            // Update audio player source and download link
+            audioPlayer.src = audioUrl;
+            downloadLink.href = audioUrl;
+
+            // Show audio player and options menu
+            audioContainer.style.display = "block";
         }
     })
     .catch(error => {
@@ -86,6 +142,7 @@ audio.addEventListener("ended", () => {
     isPlaying = false;
     isPaused = false;
     updateButtonStyle();
+    document.getElementById("highlightedTextContainer").innerHTML = "";
 });
 
 function showModal(message) {
@@ -106,6 +163,16 @@ window.onclick = function(event) {
 // Update initial button style
 updateButtonStyle();
 
+// Hide dropdown if clicking outside of it
+window.addEventListener("click", () => {
+    dropdownMenu.style.display = "none";
+});
+
+// Toggle dropdown menu on dots button click
+dotsButton.addEventListener("click", (e) => {
+    e.stopPropagation(); // Prevent click from closing the menu
+    dropdownMenu.style.display = dropdownMenu.style.display === "block" ? "none" : "block";
+});
 
 // Select the wave container element
 const waveContainer = document.getElementById('wave-container');

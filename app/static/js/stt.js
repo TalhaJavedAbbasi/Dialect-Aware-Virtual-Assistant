@@ -94,16 +94,20 @@ startBtn.addEventListener("click", async function() {
         mediaRecorder.onstop = async () => {
             setTranscribingState(true);  // Set transcribing state now
             showLoadingSpinner();  // Show spinner when processing starts
-
+document.getElementById('transcription').innerText = '';
             const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
             const formData = new FormData();
             formData.append('audio_data', audioBlob, 'audio.wav');
             formData.append("accent", accentSelect.value);
             formData.append("approach", approachSelect.value);
+            document.getElementById('transcription').innerText = '';
+
 
             try {
                 const response = await fetch('/stt/transcribe_audio', { method: 'POST', body: formData });
                 const data = await response.json();
+
+
                 if (data.transcription) {
                     document.getElementById('transcription').innerText = data.transcription;
                     addFeedback('Transcription successful.', 'info');
@@ -168,9 +172,11 @@ uploadBtn.addEventListener("click", async function(event) {
     formData.append("accent", accentSelect.value);
     formData.append("approach", approachSelect.value);
 
+
     try {
         setTranscribingState(true);
         showLoadingSpinner();
+document.getElementById('transcription').innerText = '';
         const response = await fetch('/stt/transcribe_audio', { method: 'POST', body: formData });
         const data = await response.json();
         if (data.transcription) {
@@ -185,6 +191,20 @@ uploadBtn.addEventListener("click", async function(event) {
     setTranscribingState(false);
     hideLoadingSpinner();
 });
+
+function copyToClipboard() {
+    const transcriptionText = document.getElementById('transcription').innerText;
+
+    if (!transcriptionText || transcriptionText === "Your speech transcription will appear here.") {
+        addFeedback("No text to copy.", "warning");
+        return;
+    }
+
+    navigator.clipboard.writeText(transcriptionText)
+        .then(() => addFeedback("Text copied to clipboard!", "success"))
+        .catch(err => addFeedback("Failed to copy text: " + err, "danger"));
+}
+
 
 function showLoadingSpinner() {
     document.getElementById("loading-spinner").classList.remove("d-none");

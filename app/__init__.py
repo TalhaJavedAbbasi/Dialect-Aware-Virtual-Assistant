@@ -47,7 +47,7 @@ def create_app():
     # Blueprint registration (for modular routing)
     from .auth import auth_bp
     from .oauth import oauth_bp
-    from .email import email_bp
+    from .app_email import email_bp
     from .roles import roles_bp
     from .routes import routes_bp
     from .blog import blog_bp
