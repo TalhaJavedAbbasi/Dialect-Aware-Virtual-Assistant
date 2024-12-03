@@ -1,0 +1,134 @@
+{% from "bootstrap5/form.html" import render_form %} {% block content %} {%
+include "header.html" %}
+
+<!-- Page Header -->
+
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+</head>
+<header
+  class="masthead"
+  style="background-image: url('https://plus.unsplash.com/premium_vector-1689096745847-44d72d78702a?q=80&w=1392&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')"
+>
+  <div class="container position-relative px-4 px-lg-5">
+    <div class="row gx-4 gx-lg-5 justify-content-center">
+      <div class="col-md-10 col-lg-8 col-xl-7">
+        <div class="page-heading">
+          <h1>Register</h1>
+          <span class="subheading">Start Contributing to the Blog!</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="mb-4">
+  <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow-sm">
+                    <div class="card-header ">
+                        <h3>User Profile and Preferences</h3>
+                    </div>
+                    <div class="card-body">
+                        <!-- Profile Information -->
+                        {{render_form(form, novalidate=True, button_map={"submit": "primary"})}}
+                        <div id="error-messages" class="text-danger mt-3"></div>
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<script>
+  // JavaScript for Real-Time Validation
+  document.addEventListener("DOMContentLoaded", () => {
+    const nameInput = document.querySelector('input[name="name"]');
+    const emailInput = document.querySelector('input[name="email"]');
+    const errorMessages = document.getElementById("error-messages");
+
+    // Utility function to show error messages
+    const showError = (input, message) => {
+      input.classList.add("is-invalid");
+      const errorDiv = input.nextElementSibling;
+      if (errorDiv) {
+        errorDiv.textContent = message;
+      } else {
+        const newError = document.createElement("div");
+        newError.className = "invalid-feedback";
+        newError.textContent = message;
+        input.parentNode.appendChild(newError);
+      }
+    };
+
+    // Utility function to clear errors
+    const clearError = (input) => {
+      input.classList.remove("is-invalid");
+      const errorDiv = input.nextElementSibling;
+      if (errorDiv) {
+        errorDiv.textContent = "";
+      }
+    };
+
+    // Real-time validation for name
+    nameInput.addEventListener("input", () => {
+      if (!nameInput.value.trim()) {
+        showError(nameInput, "Name cannot be empty.");
+      } else {
+        clearError(nameInput);
+      }
+    });
+
+    // Real-time validation for email
+    emailInput.addEventListener("input", () => {
+      const emailPattern = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
+      if (!emailInput.value.trim()) {
+        showError(emailInput, "Email cannot be empty.");
+      } else if (!emailPattern.test(emailInput.value)) {
+        showError(emailInput, "Invalid email format.");
+      } else if (emailInput.value.includes(".com.com")) {
+        showError(emailInput, "Email cannot have repeated domains.");
+      } else {
+        clearError(emailInput);
+      }
+    });
+  });
+
+    document.addEventListener("DOMContentLoaded", () => {
+    const themeSelect = document.querySelector('select[name="theme"]');
+    if (themeSelect) {
+      // Apply the saved theme if available
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme) {
+        document.body.classList.remove('light-theme', 'dark-theme');
+        document.body.classList.add(savedTheme + '-theme');
+        themeSelect.value = savedTheme; // Update the dropdown to reflect the saved theme
+      }
+
+      themeSelect.addEventListener('change', () => {
+        const selectedTheme = themeSelect.value;
+        document.body.classList.remove('light-theme', 'dark-theme');
+        document.body.classList.add(selectedTheme + '-theme');
+
+        // Save the theme preference to localStorage
+        localStorage.setItem('theme', selectedTheme);
+
+        // Optionally, make an AJAX call to save the user's theme in the database
+        fetch('/save-theme', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ theme: selectedTheme })
+        });
+      });
+    }
+  });
+
+</script>
+
+{% include "footer.html" %} {% endblock %}
+

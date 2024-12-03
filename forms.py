@@ -8,6 +8,13 @@ from app.models import User
 import re
 
 
+# Custom email validator function
+def validate_email_format(form, field):
+    email_pattern = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+    if not re.match(email_pattern, field.data) or '.com.com' in field.data:
+        raise ValidationError("Please enter a valid email without repeated domains.")
+
+
 # WTForm for creating a blog post
 class CreatePostForm(FlaskForm):
     title = StringField("Blog Post Title", validators=[DataRequired()])
@@ -22,7 +29,8 @@ class RegisterForm(FlaskForm):
         "Email",
         validators=[
             DataRequired(),
-            Email(message="Please enter a valid email address.")
+            Email(),
+            validate_email_format
         ]
     )
     password = PasswordField("Password", validators=[
@@ -37,15 +45,9 @@ class RegisterForm(FlaskForm):
     name = StringField("Name", validators=[DataRequired()])
     submit = SubmitField("SIGN ME UP")
 
-    # Custom email validator
-    def validate_email(self, email):
-        email_pattern = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
-        if not re.match(email_pattern, email.data) or '.com.com' in email.data:
-            raise ValidationError("Invalid email address. Please enter a valid email without repeated domains.")
-
 
 class LoginForm(FlaskForm):
-    email = StringField("Email", validators=[DataRequired(), Email(message="Please enter a valid email address.")])
+    email = StringField("Email", validators=[DataRequired(), Email(message="Please enter a valid email address."), validate_email_format])
     password = PasswordField("Password", validators=[DataRequired()])
     show_password = BooleanField('Show Password')
     submit = SubmitField("Let Me In!")
@@ -58,7 +60,7 @@ class CommentForm(FlaskForm):
 
 # Forgot Password Form
 class ForgotPasswordForm(FlaskForm):
-    email = StringField("Email", validators=[DataRequired(), Email(message="Please enter a valid email address.")])
+    email = StringField("Email", validators=[DataRequired(), Email(message="Please enter a valid email address."), validate_email_format])
     submit = SubmitField("Send Reset Link")
 
 
@@ -88,3 +90,18 @@ class AssignRoleForm(FlaskForm):
     def __init__(self, *args, **kwargs):
         super(AssignRoleForm, self).__init__(*args, **kwargs)
         self.user.choices = [(user.id, user.email) for user in User.query.all()]  # Fetch user list
+
+
+class ProfileForm(FlaskForm):
+    name = StringField('Name', validators=[DataRequired()])
+    email = StringField(
+        'Email',
+        validators=[
+            DataRequired(),
+            Email(),
+            validate_email_format
+        ]
+    )
+    language = SelectField('Preferred Language', choices=[('en', 'English'), ('ur', 'Urdu'), ('pn', 'Punjabi')], validators=[DataRequired()])
+    theme = SelectField('Theme', choices=[('light', 'Light'), ('dark', 'Dark')], validators=[DataRequired()])
+    submit = SubmitField('Save Changes')

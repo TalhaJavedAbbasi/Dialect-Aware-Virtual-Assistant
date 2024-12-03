@@ -11054,3 +11054,102 @@ header.masthead .post-heading .meta a {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-15px); } /* Adjust for more/less movement */
 }
+
+.dark-theme {
+  background-color: #222222;
+  color: #ffffff; /* Ensures text is visible */
+}
+
+.light-theme {
+  background-color: #FAFAFA;
+  color: #000000; /* Standard dark text */
+}
+
+/* General adjustments for the dark theme */
+
+/* Input fields and text areas in the dark theme */
+.dark-theme textarea,
+.dark-theme select,
+.dark-theme button,
+.dark-theme option,
+.dark-theme #transcription,
+.dark-theme input {
+  background-color: #333333; /* Darker input background */
+  color: #ffffff; /* White text for contrast */
+  border: 1px solid #555555; /* Subtle border */
+}
+
+
+/* Header adjustments */
+.dark-theme header.masthead {
+  background-color: #111111;
+  color: #ffffff;
+}
+
+/* Modal adjustments */
+.dark-theme .modal-content {
+  background-color: #444444; /* Dark modal background */
+  color: #ffffff; /* White text */
+  border: 1px solid #555555; /* Border for modal */
+}
+
+/* Button adjustments for better visibility */
+.dark-theme button {
+  background-color: #444444; /* Button background */
+  color: #ffffff; /* Button text color */
+  border: 1px solid #666666; /* Subtle border */
+}
+
+/* Wave container adjustments */
+.dark-theme #wave-container {
+  background-color: transparent; /* Ensure transparency works */
+}
+
+/* Links */ .dark-theme a { color: #1E90FF; /* Light blue for visibility */ }
+
+.wrapper.dark-theme {
+    background-color: #333333;
+    color: #ffffff;
+}
+
+
+/* General dark theme styles */
+.dark-theme {
+  background-color: #121212; /* Dark background for the page */
+  color: #ffffff; /* Light text color */
+}
+
+/* Card header */
+.dark-theme .card-header {
+  background-color: #1e1e1e; /* Darker background for the card header */
+  color: #ffffff; /* Light text color */
+}
+
+/* Card body */
+.dark-theme .card-body {
+  background-color: #1e1e1e; /* Dark background */
+  color: #ffffff; /* Light text */
+}
+
+/* Card border (optional) */
+.dark-theme .card {
+  border-color: #333333; /* Dark border */
+}
+
+/* Optional hover effect */
+.dark-theme .card:hover {
+  background-color: #292929;
+}
+
+/* Form input styling */
+.dark-theme .form-control {
+  background-color: #333333; /* Dark input background */
+  color: #ffffff; /* Light input text */
+  border: 1px solid #555555; /* Dark border */
+}
+
+.dark-theme .form-control:focus {
+  border-color: #777777; /* Lighter border on focus */
+  box-shadow: 0 0 0 0.2rem rgba(105, 172, 234, 0.25); /* Optional focus effect */
+}
+

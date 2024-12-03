@@ -7,12 +7,9 @@ from flask_mail import Mail
 from flask_sqlalchemy import SQLAlchemy
 from authlib.integrations.flask_client import OAuth
 from flask_gravatar import Gravatar
-import os
-
+from flask_migrate import Migrate
 from sqlalchemy.orm import DeclarativeBase
-
 from config import Config
-
 
 # Base declaration for models
 class Base(DeclarativeBase):
@@ -25,6 +22,7 @@ bootstrap = Bootstrap5()
 login_manager = LoginManager()
 mail = Mail()
 oauth = OAuth()
+migrate = Migrate()
 
 
 def create_app():
@@ -38,6 +36,7 @@ def create_app():
     login_manager.init_app(app)
     mail.init_app(app)
     oauth.init_app(app)
+    migrate.init_app(app, db)
 
     # Gravatar
     gravatar = Gravatar(app, size=100, rating='g', default='retro', force_default=False,
@@ -54,6 +53,7 @@ def create_app():
     from .blog import blog_bp
     from app.stt import stt_bp
     from .tts import tts_bp
+    from app.profile import profile_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(oauth_bp)
@@ -63,5 +63,6 @@ def create_app():
     app.register_blueprint(blog_bp)
     app.register_blueprint(stt_bp, url_prefix='/stt')
     app.register_blueprint(tts_bp)
+    app.register_blueprint(profile_bp)
 
     return app

@@ -249,3 +249,14 @@ border: 2px solid red;
     background-color: #333; /* Or use an image or gradient background */
     color: #fff;
 }
+
+body.dark-theme .wrapper {
+    background-color: #333333 !important;
+    color: #ffffff !important;
+}
+
+.header.dark-theme {
+    background-color: #000000;
+    color: #ffffff;
+}
+

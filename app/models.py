@@ -29,8 +29,11 @@ class User(UserMixin,db.Model):
     google_registered: Mapped[bool] = mapped_column(db.Boolean, default=False)
     is_verified: Mapped[bool] = mapped_column(db.Boolean, default=False)
     role: Mapped[str] = mapped_column(String(20), nullable=False, default='user')
+    language: Mapped[str] = mapped_column(String(5), default='en')  # Default to English
+    theme: Mapped[str] = mapped_column(String(10), default='light')
     posts = relationship("BlogPost", back_populates="author")
     comments = relationship("Comment", back_populates="comment_author")
+
 
 
 # Comment Model
