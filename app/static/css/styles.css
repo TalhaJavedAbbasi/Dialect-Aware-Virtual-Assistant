@@ -11054,3 +11054,103 @@ header.masthead .post-heading .meta a {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-15px); } /* Adjust for more/less movement */
 }
+
+/* Container for the microphone and circles */
+.animation-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Microphone styling */
+.mic {
+    z-index: 10;
+
+}
+
+/* Base style for circles */
+.circle {
+    position: absolute;
+    border: 1px solid #4CAF50;
+    border-radius: 50%;
+    opacity: 0.6;
+    animation: pulse 2s infinite ease-in-out;
+}
+
+/* Sizes for each circle */
+.circle1 {
+    width: 40px;
+    height: 40px;
+}
+
+.circle2 {
+    width: 80px;
+    height: 80px;
+}
+
+.circle3 {
+    width: 120px;
+    height: 120px;
+}
+
+
+.options-menu {
+    position: relative;
+    display: inline-block;
+}
+
+.dots-button {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: 30px;
+    background: #F1F1F1;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    min-width: 120px;
+    padding: 10px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+}
+
+.dropdown-menu a {
+    color: #333;
+    text-decoration: none;
+    font-size: 16px;
+    display: block;
+}
+
+.dropdown-menu a:hover {
+    background-color: #f0f0f0;
+}
+
+
+/* Keyframes for uniform pulsing animation */
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.6;
+    }
+    50% {
+        transform: scale(1.3);
+        opacity: 0.3;
+    }
+}
+
+/* Bobbing effect for the wave container */
+.bobbing-container {
+    animation: bobbing 2s ease-in-out infinite;
+}
+
+/* Animation keyframes for bobbing */
+@keyframes bobbing {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+}

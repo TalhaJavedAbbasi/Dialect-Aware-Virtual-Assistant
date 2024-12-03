@@ -5,19 +5,20 @@
 <head>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tts.css') }}">
 </head>
-<header class="masthead" style="background-image: url('static/assets/img/login-bg.png')">
+<header class="masthead" style="background-image: url('static/assets/img/tts-bg.jpeg')">
     <div class="container position-relative px-4 px-lg-5">
 
         </div>
         <div class="row gx-4 gx-lg-5 justify-content-center">
             <div class="col-md-10 col-lg-8 col-xl-7">
                 <div class="bobbing-container">
-            <div class="wave-container" id="wave-container">
+            <div class="wave-container" >
                 <!-- Wave bars will be added by JavaScript -->
             </div>
                 <div class="page-heading">
                     <h1>Text to Speech</h1>
-                    <span class="subheading">Convert text to speech.</span>
+                    <span class="subheading">Convert text to speech in different dialects.</span>
+
 
 
                 </div>
@@ -29,26 +30,37 @@
 <main class="container my-5">
     <div class="container my-5">
     <div class="wrapper">
-        <header>Text To Speech (Accents)</header>
+        <header>Text To Speech (Dialects)</header>
 
         <form action="#">
             <div class="row">
                 <label>Enter Text</label>
                 <textarea></textarea>
+                <div id="highlightedTextContainer"></div>
+
             </div>
             <div class="row">
-                <label>Select Voice Accent</label>
+                <label>Select Voice Dialect</label>
                 <select id="voiceList">
                     <option value="en_US">English (US) - Standard American English</option>
                     <option value="en_UK">English (UK) - British Accent</option>
                     <option value="en_AU">English (Australia)</option>
-                    <option value="en_IN">English (India)</option>
-                    <option value="ur_PK">Urdu (Pakistan)</option>
+                    <option value="en_PK">Urdu (Pakistan) </option>
+
 
 
                 </select>
             </div>
             <button id="speechButton">Convert To Speech &nbsp;<i class="fa-solid fa-headphones"></i></button>
+            <div class="audio-container" style="display:none; margin-top: 20px;">
+                <audio id="audioPlayer" controls style="width: 100%;"></audio>
+                <div class="options-menu">
+                    <button class="dots-button">⋮</button>
+                    <div class="dropdown-menu" style="display: none;">
+                        <a id="downloadLink" href="#" download>Download Audio</a>
+                    </div>
+                </div>
+            </div>
         </form>
     </div>
 

@@ -20,8 +20,7 @@ def synthesize():
         "en_US": {"lang": "en", "tld": "com"},       # English (US)
         "en_UK": {"lang": "en", "tld": "co.uk"},     # English (UK)
         "en_AU": {"lang": "en", "tld": "com.au"},    # English (Australia)
-        "en_IN": {"lang": "en", "tld": "co.in"},     # English (India)
-        "ur_PK": {"lang": "ur", "tld": "com.pk"},    # Urdu (Pakistan)
+        "en_PK": {"lang": "en", "tld": "co.in"},     # English (India)
     }
 
     # Retrieve accent config or default to US English if accent not found
