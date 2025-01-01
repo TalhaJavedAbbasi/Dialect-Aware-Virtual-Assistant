@@ -1,5 +1,6 @@
 # app/__init__.py
-from flask import Flask
+from flask import Flask, session
+from flask_session import Session
 from flask_ckeditor import CKEditor
 from flask_bootstrap import Bootstrap5
 from flask_login import LoginManager
@@ -37,6 +38,8 @@ def create_app():
     mail.init_app(app)
     oauth.init_app(app)
     migrate.init_app(app, db)
+    app.config['SESSION_TYPE'] = 'filesystem'  # Can be Redis if needed
+    Session(app)
 
     # Gravatar
     gravatar = Gravatar(app, size=100, rating='g', default='retro', force_default=False,
@@ -54,6 +57,7 @@ def create_app():
     from app.stt import stt_bp
     from .tts import tts_bp
     from app.profile import profile_bp
+    from app.voice_assistant import voice_assistant_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(oauth_bp)
@@ -64,5 +68,6 @@ def create_app():
     app.register_blueprint(stt_bp, url_prefix='/stt')
     app.register_blueprint(tts_bp)
     app.register_blueprint(profile_bp)
+    app.register_blueprint(voice_assistant_bp)
 
     return app
