@@ -33,8 +33,16 @@ class User(UserMixin,db.Model):
     theme: Mapped[str] = mapped_column(String(10), default='light')
     posts = relationship("BlogPost", back_populates="author")
     comments = relationship("Comment", back_populates="comment_author")
+    recipients = relationship("Recipient", back_populates="user", cascade="all, delete-orphan")
 
 
+class Recipient(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    nickname = db.Column(db.String(100), nullable=True)
+    email = db.Column(db.String(120), unique=False, nullable=False)  # No longer unique globally
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user = relationship("User", back_populates="recipients")
 
 # Comment Model
 class Comment(db.Model):

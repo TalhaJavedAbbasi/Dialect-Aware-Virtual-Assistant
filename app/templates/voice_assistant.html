@@ -78,10 +78,45 @@
     Reset Context
 </button>
 
+<button class="Button" id="help-button" title="View Complex Commands">
+    Help
+</button>
+<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addRecipientModal">
+  Test Modal
+</button>
+    <!-- Add Recipient Modal -->
+<div class="modal" id="addRecipientModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Register Recipient</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="registerRecipientForm">
+          <div class="form-group">
+            <label for="recipientName">Name</label>
+            <input type="text" class="form-control" id="recipientName" required>
+          </div>
+          <div class="form-group">
+            <label for="recipientNickname">Nickname (Optional)</label>
+            <input type="text" class="form-control" id="recipientNickname">
+          </div>
+          <div class="form-group">
+            <label for="recipientEmail">Email</label>
+            <input type="email" class="form-control" id="recipientEmail" required>
+          </div>
+          <button type="submit" class="btn btn-primary">Register</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 
 </div>
 
 <script src="{{ url_for('static', filename='js/voice_assistant.js') }}"></script>
-
 
 {% include "footer.html" %}

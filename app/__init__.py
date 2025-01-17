@@ -1,4 +1,6 @@
 # app/__init__.py
+import logging
+
 from flask import Flask, session
 from flask_session import Session
 from flask_ckeditor import CKEditor
@@ -27,9 +29,15 @@ migrate = Migrate()
 
 
 def create_app():
+    # Initialize logging first
+    logging.basicConfig(
+        level=logging.INFO,  # Adjust level as needed (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        format='%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]',
+    )
     app = Flask(__name__)
     app.config.from_object(Config)
 
+    app.logger.info('Application startup')
     # Initialize extensions
     db.init_app(app)
     ckeditor.init_app(app)
@@ -57,7 +65,7 @@ def create_app():
     from app.stt import stt_bp
     from .tts import tts_bp
     from app.profile import profile_bp
-    from app.voice_assistant import voice_assistant_bp
+    from app.voice_assistant.voice_assistant import voice_assistant_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(oauth_bp)

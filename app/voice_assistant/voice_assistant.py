@@ -1,6 +1,7 @@
 import time
 import logging
 from flask import Blueprint, render_template, request, jsonify, session
+from flask_login import current_user
 from app.stt import transcribe_with_speech_recognition, convert_to_wav
 from werkzeug.utils import secure_filename
 import google.generativeai as genai
@@ -11,6 +12,9 @@ from flask import send_file
 import tempfile
 from langdetect import detect
 import re
+from app import mail, db
+from app.models import Recipient
+from .command_router import execute_complex_command
 
 voice_assistant_bp = Blueprint('voice_assistant', __name__, template_folder='templates')
 
@@ -97,6 +101,40 @@ def text_to_speech():
         print(f"Error during TTS generation: {str(e)}")
         return jsonify({"error": "Error generating audio response. Please try again later."}), 500
 
+def process_user_message(user_message):
+    logging.debug(f"Processing user message: {user_message}")
+
+    # Initialize context if not present
+    if 'context' not in session:
+        session['context'] = {"messages": [], "state": {}}
+
+    # Update context with the user's message
+    session['context']["messages"].append({"role": "user", "content": user_message})
+
+    # Try to execute a complex command
+    command_response = execute_complex_command(user_message)
+
+    if command_response:
+        # Recognized and executed a complex command
+        formatted_response = markdown(command_response)
+        session['context']["messages"].append({"role": "assistant", "content": formatted_response})
+        session.modified = True
+        return formatted_response
+
+    # If no complex command was recognized, proceed with Gemini response
+    logging.debug("Falling back to Gemini for response.")
+    conversation_context = [
+        f"{message['role']}: {message['content']}" for message in session['context']["messages"]
+    ]
+    context_string = "\n".join(conversation_context)
+
+    response = model.generate_content(context_string)
+    formatted_response = markdown(response.text)
+    session['context']["messages"].append({"role": "assistant", "content": formatted_response})
+    session.modified = True
+    return formatted_response
+
+
 
 @voice_assistant_bp.route('/api/audio-input', methods=['POST'])
 def process_audio():
@@ -119,27 +157,36 @@ def process_audio():
             accent = "en-UR"  # Default to Urdu accent, modify as needed
             transcription = transcribe_with_speech_recognition(wav_path, accent)
 
-            # Generate response using Gemini
-            gemini_response = gemini_response_internal(transcription)
+            # Logging transcription for debugging
+            logging.debug(f"Transcription output: {transcription}")
 
-            # Return both transcription and Gemini response
-            return jsonify({"response": transcription, "gemini_response": gemini_response})
+            # Process the transcription with the shared function
+            assistant_response = process_user_message(transcription)
+
+            # Return both user and assistant messages
+            return jsonify({
+                "user_message": transcription,
+                "assistant_response": assistant_response
+            })
 
         except Exception as e:
+            logging.error(f"Error processing audio: {str(e)}")
             return jsonify({"error": str(e)}), 500
 
     return jsonify({"error": "Invalid audio input"}), 400
+
+
 
 # Function to generate response from Gemini
 def gemini_response_internal(user_message, max_tokens=20):
     try:
         # Explicitly instruct the model to be concise
-        prompt = f"Respond in fewer than {max_tokens} tokens: {user_message}"
+        prompt = f"You should use short and concise responses, and avoiding usage of unpronouncable punctuation.: {user_message}"
         response = model.generate_content(prompt)
 
         # Post-process response to enforce token limit
-        truncated_response = ' '.join(response.text.split()[:max_tokens])
-        formatted_response = markdown(truncated_response)
+        # truncated_response = ' '.join(response.text.split()[:max_tokens])
+        formatted_response = markdown(response.text)
 
         return formatted_response
     except Exception as e:
@@ -161,34 +208,20 @@ def gemini_response():
     if not user_message:
         return jsonify({"error": "No message provided"}), 400
 
-    # Initialize context in session if not present
-    if 'context' not in session:
-        session['context'] = {"messages": [], "state": {}}
-
-    # Update context with the user's message
-    session['context']["messages"].append({"role": "user", "content": user_message})
-
-    # Generate response using full conversation context
     try:
-        # Prepare context for Gemini
-        conversation_context = [
-            f"{message['role']}: {message['content']}" for message in session['context']["messages"]
-        ]
-        context_string = "\n".join(conversation_context)
-        # Generate response
-        response = model.generate_content(context_string)
-        formatted_response = markdown(response.text)
-        print(response)
+        # Use the shared function for handling complex command checking and context-based response generation
+        response = process_user_message(user_message)
+        return jsonify({"response": response})
 
-        # Update context with the assistant's response
-        session['context']["messages"].append({"role": "assistant", "content": formatted_response})
-        session.modified = True  # Save changes to the session
-
-        return jsonify({"response": formatted_response})
+    except ValueError as ve:
+        logging.error(f"Validation error: {str(ve)}")
+        return jsonify({"error": f"Validation error: {str(ve)}"}), 400
+    except KeyError as ke:
+        logging.error(f"Missing data: {str(ke)}")
+        return jsonify({"error": f"Missing data: {str(ke)}"}), 400
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
+        logging.error(f"Unexpected error: {str(e)}")
+        return jsonify({"error": "An unexpected error occurred. Please try again."}), 500
 
 @voice_assistant_bp.route('/api/reset-context', methods=['POST'])
 def reset_context():
@@ -204,3 +237,29 @@ def get_context():
     current_context = session.get('context', {"messages": [], "state": {}})
     return jsonify({"context": current_context})
 
+
+@voice_assistant_bp.route('/api/register-recipient', methods=['POST'])
+def register_recipient():
+    data = request.json
+    name = data.get('name')
+    nickname = data.get('nickname')
+    email = data.get('email')
+
+    if not name or not email:
+        return jsonify({"error": "Name and email are required."}), 400
+
+    try:
+        print(f"Registering recipient: Name={name}, Nickname={nickname}, Email={email}")
+        # Check for duplicate email
+        if Recipient.query.filter_by(email=email).first():
+            return jsonify({"error": "Email already registered."}), 400
+
+        user_id = current_user.id  # Flask-Login example
+        recipient = Recipient(name=name, nickname=nickname, email=email, user_id=user_id)
+        db.session.add(recipient)
+        db.session.commit()
+
+        return jsonify({"message": f"Recipient {name} registered successfully!"}), 200
+    except Exception as e:
+        logging.error(f"Error registering recipient: {e}")
+        return jsonify({"error": "Failed to register recipient. Please try again."}), 500

@@ -185,42 +185,45 @@ function stopRecording() {
 }
 
 
-// Send audio to server with loader management
 async function sendAudioToServer(audioBlob) {
-  const formData = new FormData();
-  formData.append('audio', audioBlob, 'input.wav');
+    const formData = new FormData();
+    formData.append('audio', audioBlob, 'input.wav');
+    console.log('Sending audio to server...');
+    console.log('Audio blob:', audioBlob);
 
-  try {
-    const response = await fetch('/api/audio-input', {
-      method: 'POST',
-      body: formData
-    });
+    try {
+        const response = await fetch('/api/audio-input', {
+            method: 'POST',
+            body: formData
+        });
 
-    const data = await response.json();
+        const data = await response.json();
+        console.log('Server response:', data);
 
-    // Hide loader when transcription is ready
-    loader.style.display = 'none';
+        // Hide loader when transcription is ready
+        loader.style.display = 'none';
 
-    if (data.response && data.gemini_response) {
-      // Show transcribed message as user message
-      addMessage('user', data.response);
+        if (data.user_message && data.assistant_response) {
+            // Show transcribed message as user message
+            addMessage('user', data.user_message);
 
-      // Show loader while Gemini processes the response
-      loader.style.display = 'flex';
+            // Show loader while processing response
+            loader.style.display = 'flex';
 
-      setTimeout(() => {
-        loader.style.display = 'none'; // Hide loader after response is ready
-        addMessage('assistant', data.gemini_response); // Display Gemini's response
-      }, 1000); // Simulate loader delay for better UI
-    } else {
-      addMessage('assistant', 'Audio unclear. Please try again.');
+            setTimeout(() => {
+                loader.style.display = 'none'; // Hide loader after response is ready
+                addMessage('assistant', data.assistant_response); // Display assistant's response
+            }, 1000); // Simulate loader delay for better UI
+        } else {
+            addMessage('assistant', 'Audio unclear. Please try again.');
+        }
+    } catch (error) {
+        console.error('Error sending audio to server:', error);
+        loader.style.display = 'none';
+        addMessage('assistant', 'Error processing audio. Please try again.');
     }
-  } catch (error) {
-    console.error('Error sending audio to server:', error);
-    loader.style.display = 'none';
-    addMessage('assistant', 'Error processing audio. Please try again.');
-  }
 }
+
 
 // Play TTS response
 async function playAudioResponse(text) {
@@ -410,3 +413,43 @@ function showToast(message, isError = false) {
     }, 3000);
 }
 
+
+const helpButton = document.getElementById('help-button');
+helpButton.addEventListener('click', () => {
+    const helpMessage = `
+        Available Complex Commands:
+        1. Send email to [name] with subject [subject] and body [body].
+        2. Set reminder for [event] at [time].
+    `;
+    addMessage('assistant', helpMessage);
+});
+
+document.getElementById('registerRecipientForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const name = document.getElementById('recipientName').value;
+    const nickname = document.getElementById('recipientNickname').value;
+    const email = document.getElementById('recipientEmail').value;
+
+    const response = await fetch('/api/register-recipient', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, nickname, email }),
+    });
+
+    const result = await response.json();
+    if (response.ok) {
+        // Show success toast
+        showToast(result.message, false);
+
+        // Hide the modal after a short delay
+        setTimeout(() => {
+            $('#addRecipientModal').modal('hide');
+        }, 1000); // Delay before hiding modal
+    } else {
+        // Show error toast
+        showToast(result.error, true);
+    }
+});
