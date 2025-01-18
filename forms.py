@@ -21,6 +21,20 @@ class CreatePostForm(FlaskForm):
     subtitle = StringField("Subtitle", validators=[DataRequired()])
     img_url = StringField("Blog Image URL", validators=[DataRequired(), URL()])
     body = CKEditorField("Blog Content", validators=[DataRequired()])
+    category = SelectField(
+        "Category",
+        choices=[
+            ("dialect_origins", "Dialect Origins"),
+            ("pronunciation_tips", "Pronunciation Tips"),
+            ("common_expressions", "Common Expressions"),
+            ("cultural_insights", "Cultural Insights"),
+            ("learning_resources", "Learning Resources"),
+            ("linguistic_comparisons", "Linguistic Comparisons"),
+            ("community_stories", "Community Stories"),
+            ("preservation_efforts", "Preservation Efforts"),
+        ],
+        validators=[DataRequired()]
+    )
     submit = SubmitField("Submit Post")
 
 

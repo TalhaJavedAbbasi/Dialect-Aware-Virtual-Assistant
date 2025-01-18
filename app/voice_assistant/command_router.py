@@ -1,4 +1,3 @@
-from .actions.web_actions import open_website
 from .actions.system_actions import open_generic
 from .actions.complex_actions import handle_send_email, handle_set_reminder, handle_search_query, handle_play_query
 

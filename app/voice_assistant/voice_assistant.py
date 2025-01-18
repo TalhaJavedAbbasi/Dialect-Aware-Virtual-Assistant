@@ -18,9 +18,14 @@ from .command_router import execute_complex_command
 
 voice_assistant_bp = Blueprint('voice_assistant', __name__, template_folder='templates')
 
+# Access the API key directly
+gemini_api_key = os.getenv('GEMINI_KEY')
+
+if not gemini_api_key:
+    raise ValueError("GEMINI_KEY environment variable is not set. Please configure it.")
+
 # Configure the Gemini API
-os.environ["GEMINI_API_KEY"] = "AIzaSyDc50TUT66SRytWkQS77MOSvjgAx87m-_A"  # Replace <YOUR_API_KEY> with your actual API key
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+genai.configure(api_key=gemini_api_key)
 
 # Initialize the Gemini model globally
 model = genai.GenerativeModel(model_name="gemini-1.5-flash")
@@ -128,11 +133,23 @@ def process_user_message(user_message):
     ]
     context_string = "\n".join(conversation_context)
 
-    response = model.generate_content(context_string)
+    # Use the full context with a concise instruction
+    prompt = (
+        f"You are a voice assistant. Your interface with users will be voice. You should use short and concise responses, "
+        f"avoiding unpronounceable punctuation. Use the following conversation context to respond:\n"
+        f"{context_string}\n\n"
+        f"User: {user_message}"
+    )
+
+    # Generate response from Gemini
+    response = model.generate_content(prompt)
+
+    # Format the response as markdown and update context
     formatted_response = markdown(response.text)
     session['context']["messages"].append({"role": "assistant", "content": formatted_response})
     session.modified = True
     return formatted_response
+
 
 
 
@@ -176,21 +193,25 @@ def process_audio():
     return jsonify({"error": "Invalid audio input"}), 400
 
 
-
 # Function to generate response from Gemini
 def gemini_response_internal(user_message, max_tokens=20):
     try:
-        # Explicitly instruct the model to be concise
-        prompt = f"You should use short and concise responses, and avoiding usage of unpronouncable punctuation.: {user_message}"
+        # Combine concise instruction with the user message
+        prompt = (
+            f"You are a voice assistant. Your interface with users will be voice. You should use short and concise responses, "
+            f"avoiding unpronounceable punctuation. Respond concisely to the following input:\n"
+            f"User: {user_message}"
+        )
+
+        # Generate content with Gemini
         response = model.generate_content(prompt)
 
-        # Post-process response to enforce token limit
-        # truncated_response = ' '.join(response.text.split()[:max_tokens])
-        formatted_response = markdown(response.text)
-
-        return formatted_response
+        # Truncate the response to ensure it adheres to the max_tokens limit (if applicable)
+        truncated_response = '. '.join(response.text.split('. ')[:3]) + '.'  # Limit to 3 sentences
+        return markdown(truncated_response)
     except Exception as e:
         return f"Error generating response: {str(e)}"
+
 
 
 # Route for rendering the chat page

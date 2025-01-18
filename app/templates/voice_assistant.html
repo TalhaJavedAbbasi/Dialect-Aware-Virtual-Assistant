@@ -13,9 +13,18 @@
     <h2 class="Title">AI Chatbot</h2>
 </header>
 
+    <div class="FABContainer">
+        <button class="FABButton" id="fab-button">+</button>
+        <div class="FABMenu" id="fab-menu">
+            <button class="FABMenuButton ResetButton" id="reset-context-button" title="Reset Context">Reset</button>
+            <button class="FABMenuButton HelpButton" id="help-button" title="View Complex Commands">Help</button>
+            <button class="FABMenuButton" id="test-modal-button" data-toggle="modal" data-target="#addRecipientModal">Test Modal</button>
+        </div>
+    </div>
 
 
-  <div class="ChatContainer" id="chat-container">
+
+    <div class="ChatContainer" id="chat-container">
     <!-- Messages will be dynamically appended here -->
       <div id="notification" style="display: none; position: absolute;
         top: 10px; left: 50%; transform: translateX(-50%);
@@ -28,25 +37,22 @@
 
     <div class="Controls">
         <div class="TextAreaContainer">
-            <textarea
-                class="TextArea form-control flex-grow-1 me-2"
-                rows="1"
-                id="chat-input"
-                placeholder="Message AI Assistant"></textarea>
-
+            <textarea class="TextArea" id="chat-input" rows="1" placeholder="Message AI Assistant"></textarea>
         </div>
         <button class="Button" id="send-button">
-
-<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M120-160v-640l760 320-760 320Zm80-120 474-200-474-200v140l240 60-240 60v140Zm0 0v-400 400Z"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#fff">
+                <path d="M120-160v-640l760 320-760 320Zm80-120 474-200-474-200v140l240 60-240 60v140Zm0 0v-400 400Z" />
+            </svg>
         </button>
         <button class="Button" id="mic-button">
-    <!-- Mic SVG Icon -->
-    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#5f6368">
-      <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3s-3 1.34-3 3v6c0 1.66 1.34 3 3 3zm4-3c0 2.21-1.79 4-4 4s-4-1.79-4-4H6c0 3.07 2.13 5.64 5 6.32V20h2v-2.68c2.87-.68 5-3.25 5-6.32h-2z" />
-    </svg>
-  </button>
-
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#fff">
+                <path
+                        d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3s-3 1.34-3 3v6c0 1.66 1.34 3 3 3zm4-3c0 2.21-1.79 4-4 4s-4-1.79-4-4H6c0 3.07 2.13 5.64 5 6.32V20h2v-2.68c2.87-.68 5-3.25 5-6.32h-2z"
+                />
+            </svg>
+        </button>
     </div>
+</div>
 
 <!-- Confirmation Modal -->
 <div id="confirmation-modal" class="Modal">
@@ -70,20 +76,18 @@
     </div>
 </div>
 
-
-<button class="ResetButton" id="reset-context-button" title="Reset Context">
-    <svg xmlns="http://www.w3.org/2000/svg" height="20px" width="20px" viewBox="0 0 24 24" fill="#fff">
-        <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.16-.34 2.24-.93 3.14l1.46 1.46C19.41 14.74 20 13.42 20 12c0-4.41-3.59-8-8-8zm-6.07 9.07L4.54 15.5C3.95 14.76 3.59 13.92 3.41 13H1.92c.22 1.16.73 2.21 1.5 3.14L4.54 17H3v4h4v-2H4.54l1.39-1.39C7.5 19.27 9.62 20 12 20c4.41 0 8-3.59 8-8 0-1.34-.34-2.6-.93-3.71l-1.46 1.46C18.66 11.76 19 12.85 19 14c0 3.31-2.69 6-6 6-2.38 0-4.5-.73-5.93-2.07z"/>
-    </svg>
-    Reset Context
-</button>
-
-<button class="Button" id="help-button" title="View Complex Commands">
-    Help
-</button>
-<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addRecipientModal">
-  Test Modal
-</button>
+<!-- Help Modal -->
+<div id="help-modal" class="Modal">
+    <div class="ModalContent">
+        <h3>Help</h3>
+        <p>Available Complex Commands:</p>
+        <ul>
+            <li>Send email to [name] with subject [subject] and body [body].</li>
+            <li>Set reminder for [event] at [time].</li>
+        </ul>
+        <button class="ModalButton ModalButton--cancel" id="close-help-modal">Close</button>
+    </div>
+</div>
     <!-- Add Recipient Modal -->
 <div class="modal" id="addRecipientModal" tabindex="-1" role="dialog">
   <div class="modal-dialog" role="document">
@@ -115,7 +119,6 @@
   </div>
 </div>
 
-</div>
 
 <script src="{{ url_for('static', filename='js/voice_assistant.js') }}"></script>
 

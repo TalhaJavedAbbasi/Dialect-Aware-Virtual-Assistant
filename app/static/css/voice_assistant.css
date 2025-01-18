@@ -1,15 +1,23 @@
+/* Body styling for a modern look */
+body {
+  font-family: 'Arial', sans-serif;
+  background: linear-gradient(135deg, #6e7c85, #444); /* Soft gradient */
+  margin: 0;
+  padding: 0;
+  color: #fff;
+}
+
+/* Application container */
 .App {
   display: flex;
-  background-color: Gray;
   flex-direction: column;
   align-items: center;
   gap: 16px;
   height: 100vh;
   padding: 16px;
-
-
 }
 
+/* Header styling */
 .Header {
   text-align: center;
 }
@@ -21,124 +29,276 @@
 
 .Title {
   margin: 0;
+  font-size: 28px;
+  font-weight: bold;
+  color: #ffffff;
 }
 
+/* Chat container with modern card-like style */
 .ChatContainer {
   flex-grow: 1;
-  position: relative; /* Required for absolute positioning */
+  position: relative;
   width: 100%;
-  background: light-dark(#ffffff, #212121);
-
+  max-width: 800px;
+  background: #ffffff;
   border-radius: 16px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 8px; /* Spacing between messages */
+  gap: 12px; /* Spacing between messages */
   padding: 16px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* Subtle shadow */
 }
 
+/* Message bubbles */
 .Message {
-  max-width: 80%; /* Adjust message width for readability */
-  word-wrap: break-word; /* Ensure long words wrap properly */
-  white-space: pre-wrap; /* Preserve whitespace and wrap text */
-  padding: 8px 16px;
-  border-radius: 16px;
+  max-width: 75%; /* Adjust width for better readability */
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  padding: 12px 18px;
+  border-radius: 18px;
   font-size: 14px;
   line-height: 1.5;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* Soft shadow */
 }
 
 .Message[data-role="user"] {
   align-self: flex-end;
-  background: #f3f3f3;
-}
-
-/*.Message[data-role="assistant"] {
-  align-self: flex-start;
-  background: #e0e0e0;
-}*/
-
-/*.ChatInput {
-  display: flex;
-  gap: 8px;
-  width: 100%;
-  padding: 8px;
-}
-
-.ChatInput textarea {
-  flex-grow: 1;
-  padding: 8px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  resize: none;
-}
-
-.ChatInput button {
-  padding: 8px 16px;
-  border-radius: 8px;
-  border: none;
   background: #007bff;
-  color: white;
-  cursor: pointer;
-}*/
+  color: #fff;
+}
+
+.Message[data-role="assistant"] {
+  align-self: flex-start;
+  background: #f1f1f1;
+  color: #333;
+}
+
+/* Chat controls */
 .Controls {
   display: flex;
   align-items: center;
   gap: 8px;
   width: 100%;
+  max-width: 800px;
+  padding: 8px;
 }
 
-/*.TextAreaContainer {
-  flex-grow: 1;
-  padding: 8px 16px;
-  line-height: 0;
-  border-radius: 16px;
-  background: light-dark(#ffffff, #212121);
-}*/
-/* Textarea */
+/* Textarea container */
 .TextAreaContainer {
-  background: light-dark(#ffffff, #212121); /* In-between shade */
+  flex-grow: 1;
+  background: #f9f9f9;
   border-radius: 16px;
   padding: 8px;
-  flex-grow: 1;
-  border: 1px solid light-dark(#ddd, #333); /* Subtle border for visibility */
+  border: 1px solid #ddd;
 }
 
 .TextArea {
-  color: light-dark(#000000, #ffffff);
-  overflow-y: hidden;
+  width: 100%;
+  background: transparent;
+  color: #333;
   border: none;
   outline: none;
   resize: none;
   font-size: 14px;
   line-height: 20px;
   padding: 8px;
-  border-radius: 8px;
 }
 
+.TextArea:focus {
+  border: 1px solid #007bff;
+  box-shadow: 0 0 4px #007bff;
+}
+
+/* Button styling */
 .Button {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 36px;
-  height: 36px;
+  width: 42px;
+  height: 42px;
   border: none;
   border-radius: 50%;
-  outline: none;
-  background: light-dark(#0d0d0d, #ececec);
+  background: #007bff;
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.Button:hover {
+  background-color: #0056b3;
+  transform: scale(1.1);
+}
+
+/* Reset context button */
+.ResetButton {
+  background-color: #007bff;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 9999;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.ResetButton:hover {
+  background-color: #0056b3;
+  transform: scale(1.05);
+}
+
+
+/* Modal */
+.Modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5); /* Overlay */
+  z-index: 1000;
+}
+
+.ModalContent {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  width: 400px;
+}
+
+.ModalActions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.ModalButton {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.ModalButton--confirm {
+  background-color: #28a745;
+  color: white;
+}
+
+.ModalButton--cancel {
+  background-color: #dc3545;
+  color: white;
+}
+
+/* Toaster message styling */
+.Toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 250px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 16px;
+  color: white;
+  background-color: #28a745;
+  z-index: 10000;
+  animation: slide-in 0.5s, fade-out 0.5s 3s forwards;
+}
+
+.Toast--error {
+  background-color: #dc3545;
+}
+
+/* Slide-in animation for toaster */
+@keyframes slide-in {
+  from {
+    transform: translateX(-50%) translateY(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Fade-out animation for toaster */
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.FABContainer {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+}
+
+.FABButton {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.FABButton:hover {
+  background-color: #0056b3;
+  transform: scale(1.1);
+}
+
+.FABMenu {
+  display: none;
+  flex-direction: column;
+  position: absolute;
+  bottom: 70px; /* Position above the FAB */
+  right: 0;
+  gap: 10px;
+}
+
+.FABMenu.show {
+  display: flex;
+}
+
+.FABMenuButton {
+  background-color: #007bff;
+  color: white;
+  font-size: 14px;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   cursor: pointer;
 }
 
-.Button svg {
-  fill: light-dark(#f3f3f3, #171717);
-}
-
-#mic-button {
-  background: light-dark(#007bff, #5f6368); /* Different color for the mic button */
-}
-
-.TextArea:focus {
-  border: 1px solid light-dark(#007bff, #80bfff); /* Highlight on focus */
-  box-shadow: 0 0 4px light-dark(#007bff, #80bfff);
+.FABMenuButton:hover {
+  background-color: #0056b3;
 }
 
 
@@ -191,145 +351,36 @@
   }
 }
 
-input:disabled, button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.Toast {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    min-width: 250px;
-    padding: 10px 20px;
-    border-radius: 5px;
-    text-align: center;
-    font-size: 16px;
-    color: white;
-    background-color: #28a745;
-    opacity: 1;
-    z-index: 9999;
-    transition: opacity 0.5s, bottom 0.5s;
-}
-
-.Toast--error {
-    background-color: #dc3545;
-}
-
-.Toast--hide {
-    opacity: 0;
-    bottom: 10px;
-}
-
-/* Modal Overlay */
+/* Modal styling */
 .Modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1000;
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
 }
 
-/* Modal Content */
 .ModalContent {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    text-align: center;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    width: 300px;
-}
-
-/* Modal Actions */
-.ModalActions {
-    margin-top: 20px;
-    display: flex;
-    justify-content: space-between;
-}
-
-.ModalButton {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-}
-
-.ModalButton--confirm {
-    background-color: #28a745;
-    color: white;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .ModalButton--cancel {
-    background-color: #dc3545;
-    color: white;
+  background-color: #dc3545;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
 }
-
-/* Sidebar */
-.Sidebar {
-    background-color: #f4f4f4;
-    padding: 10px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 70px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-/* Chat Area */
-.ChatArea {
-    margin-left: 70px; /* Adjust based on sidebar width */
-}
-
-/* If you want it below the navbar (fixed position under navbar) */
-.ResetButton {
-    background-color: #007bff;
-    color: white;
-    font-size: 16px;
-    font-weight: bold;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    position: fixed;
-    top: 80px;  /* Adjust this to be just below your navbar */
-    right: 20px;
-    z-index: 9999;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.3s ease;
-}
-
-#context-preview {
-    background-color: #f9f9f9;
-    border: 1px solid #ddd;
-    padding: 10px;
-    border-radius: 5px;
-}
-
-#context-messages {
-    max-height: 150px;
-    overflow-y: auto;
-    border: 1px solid #ddd;
-    padding: 5px;
-}
-
-
-
-
-
-
-
-
-
-

@@ -17,6 +17,50 @@
   </div>
 </header>
 
+<!-- Category Filter -->
+<div class="container px-4 px-lg-5">
+  <div class="row gx-4 gx-lg-5 justify-content-center">
+    <div class="col-md-10 col-lg-8 col-xl-7">
+      <h5>Filter by Category:</h5>
+      <div class="btn-group" role="group" aria-label="Category Filter">
+        <!-- Button for All Categories -->
+        <a href="{{ url_for('blog.get_all_posts') }}"
+           class="btn {% if not request.args.get('category') %}btn-primary{% else %}btn-outline-primary{% endif %}">
+          All Categories
+        </a>
+
+        <!-- Button for Dialect Origins -->
+        <a href="{{ url_for('blog.get_all_posts', category='dialect_origins') }}"
+           class="btn {% if request.args.get('category') == 'dialect_origins' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+          Dialect Origins
+        </a>
+
+        <!-- Button for Pronunciation Tips -->
+        <a href="{{ url_for('blog.get_all_posts', category='pronunciation_tips') }}"
+           class="btn {% if request.args.get('category') == 'pronunciation_tips' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+          Pronunciation Tips
+        </a>
+
+        <!-- Button for Common Expressions -->
+        <a href="{{ url_for('blog.get_all_posts', category='common_expressions') }}"
+           class="btn {% if request.args.get('category') == 'common_expressions' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+          Common Expressions
+        </a>
+
+        <!-- Add other categories as needed -->
+        <a href="{{ url_for('blog.get_all_posts', category='cultural_insights') }}"
+           class="btn {% if request.args.get('category') == 'cultural_insights' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+          Cultural Insights
+        </a>
+        <a href="{{ url_for('blog.get_all_posts', category='learning_resources') }}"
+           class="btn {% if request.args.get('category') == 'learning_resources' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+          Learning Resources
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="container px-4 px-lg-5">
   <div class="row gx-4 gx-lg-5 justify-content-center">
     <div class="col-md-10 col-lg-8 col-xl-7">
@@ -31,7 +75,8 @@
           Posted by
           <a href="#">{{post.author.name}}</a>
           on {{post.date}}
-
+          <br>
+          <strong>Category:</strong> {{ post.category }}
           <a href="{{url_for('blog.delete_post', post_id=post.id) }}">✘</a>
         </p>
       </div>
@@ -40,7 +85,7 @@
       {% endfor %}
 
       <!-- New Post -->
-      {% if current_user.id == 2 %}
+      {% if current_user.id == admin %}
       <div class="d-flex justify-content-end mb-4">
         <a
           class="btn btn-primary float-right"

@@ -11,8 +11,11 @@ blog_bp = Blueprint('blog', __name__)
 
 @blog_bp.route('/')
 def get_all_posts():
-    result = db.session.execute(db.select(BlogPost))
-    posts = result.scalars().all()
+    category = request.args.get("category")
+    if category:
+        posts = BlogPost.query.filter_by(category=category).all()
+    else:
+        posts = BlogPost.query.all()
     return render_template("index.html", all_posts=posts, current_user=current_user)
 
 
@@ -44,6 +47,7 @@ def add_new_post():
             title=form.title.data,
             subtitle=form.subtitle.data,
             body=form.body.data,
+            category=form.category.data,  # Save category
             img_url=form.img_url.data,
             author=current_user,
             date=date.today().strftime("%B %d, %Y")
@@ -63,7 +67,8 @@ def edit_post(post_id):
         subtitle=post.subtitle,
         img_url=post.img_url,
         author=post.author,
-        body=post.body
+        body=post.body,
+        category=post.category
     )
     if edit_form.validate_on_submit():
         post.title = edit_form.title.data
@@ -71,6 +76,7 @@ def edit_post(post_id):
         post.img_url = edit_form.img_url.data
         post.author = current_user
         post.body = edit_form.body.data
+        post.category = edit_form.category.data  # Update category
         db.session.commit()
         return redirect(url_for("blog.show_post", post_id=post.id))
     return render_template("make-post.html" , form=edit_form, is_edit=True, current_user=current_user)

@@ -4,6 +4,24 @@
   const micButton = document.getElementById('mic-button');
   const resetContextButton = document.getElementById('reset-context-button'); // Reset context button
   const loader = document.getElementById('loader'); // Get the loader element
+  const helpButton = document.getElementById('help-button');
+  const helpModal = document.getElementById('help-modal');
+  const closeHelpModal = document.getElementById('close-help-modal');
+  const fabButton = document.getElementById('fab-button');
+  const fabMenu = document.getElementById('fab-menu');
+
+  fabButton.addEventListener('click', () => {
+    fabMenu.classList.toggle('show'); // Toggle the menu's visibility
+  });
+
+
+  helpButton.addEventListener('click', () => {
+    helpModal.style.display = 'block';
+  });
+
+  closeHelpModal.addEventListener('click', () => {
+    helpModal.style.display = 'none';
+  });
 
   let mediaRecorder;
   let audioChunks = [];
@@ -413,16 +431,6 @@ function showToast(message, isError = false) {
     }, 3000);
 }
 
-
-const helpButton = document.getElementById('help-button');
-helpButton.addEventListener('click', () => {
-    const helpMessage = `
-        Available Complex Commands:
-        1. Send email to [name] with subject [subject] and body [body].
-        2. Set reminder for [event] at [time].
-    `;
-    addMessage('assistant', helpMessage);
-});
 
 document.getElementById('registerRecipientForm').addEventListener('submit', async function (e) {
     e.preventDefault();

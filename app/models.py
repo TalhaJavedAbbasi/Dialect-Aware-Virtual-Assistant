@@ -16,6 +16,7 @@ class BlogPost(db.Model):
     date: Mapped[str] = mapped_column(String(250), nullable=False)
     body: Mapped[str] = mapped_column(Text, nullable=False)
     img_url: Mapped[str] = mapped_column(String(250), nullable=False)
+    category: Mapped[str] = mapped_column(String(100), nullable=False, default="uncategorized")  # Add this field
     comments = relationship("Comment", back_populates="parent_post")
 
 
