@@ -10,46 +10,125 @@ from datetime import datetime
 
 from urllib.parse import quote
 import requests
+NAME_MAPPING = {
+    "سامی": "sami",
+    "علی": "ali",
+    "احمد": "ahmed",
+    "فرحان": "farhan",
+    "طلحہ": "talha",
+    "حمزہ": "hamza",
+    "حسن": "hassan",
+    "حسین": "hussain",
+    "فیصل": "faisal",
+    "زید": "zaid",
+    "ریحان": "rehan",
+    "کاشف": "kashif",
+    "عرفان": "irfan",
+    "عمران": "imran",
+    "نعمان": "numan",
+    "شعیب": "shoaib",
+    "راشد": "rashid",
+    "کامران": "kamran",
+    "عامر": "aamir",
+    "ارسلان": "arslan",
+    "حمید": "hameed",
+    "شبیر": "shabbir",
+    "یوسف": "yousuf",
+    "وقار": "waqar",
+    "منصور": "mansoor",
+    "مہتاب": "mehtab",
+    "ابرار": "abrar",
+    "سلمان": "salman",
+    "ذیشان": "zeeshan",
+    "مظفر": "muzaffar",
+    "مدثر": "mudassir",
+    "ناصر": "nasir",
+    "جاوید": "javed",
+    "تنویر": "tanveer",
+    "شمریز": "shamrez",
+    "رضوان": "rizwan",
+    "رفیق": "rafiq",
+    "آصف": "asif",
+    "بابر": "babar",
+    "عارف": "arif",
+    "شفیق": "shafiq",
+    "سجاد": "sajjad",
+    "ادریس": "idrees",
+    "فہد": "fahad",
+    "صدیق": "siddiq",
+    "محبوب": "mehboob",
+    "انیس": "anees",
+    "عبید": "obaid",
+    "رافع": "rafeh",
+    "شاہد": "shahid",
+    "عابد": "abid",
+    "شہزاد": "shehzad",
+    "نواز": "nawaz",
+    "عاصم": "asim",
+    "طاہر": "tahir",
+    "نوید": "naveed",
+    "سہیل": "sohail",
+    "بشیر": "basheer",
+    "خالد": "khalid",
+    "طارق": "tariq",
+    "فاروق": "farooq",
+    "مشتاق": "mushtaq",
+    "یونس": "younis",
+    "لطیف": "lateef",
+    "ہمایوں": "humayun",
+    "ضیاء": "zia",
+    "ابرہیم": "ibrahim",
+    "شاکر": "shakir",
+    "ندیم": "nadeem",
+    "عزیز": "aziz",
+    "سلیم": "saleem",
+    "قیصر": "qaiser",
+    "شفقت": "shafqat",
+    "زبیر": "zubair",
+}
 
-# Specific command handlers
+
+def transliterate_urdu_to_english(text):
+    """Simple mapping-based transliteration from Urdu to English."""
+    return NAME_MAPPING.get(text.strip(), text.strip().lower())  # Default to lower-case if no match
+
 def handle_send_email(command):
-    match = re.search(r"send email to (.+?) with subject (.+?) and body (.+)", command, re.IGNORECASE)
-    if match:
-        name, subject, body = match.groups()
+    print(command)
+    match = re.search(
+        r"(?:to|کو)\s+(.+?)\s+(?:with\s+subject|کا\s+عنوان)\s+(.+?)\s+(?:and\s+body|اور\s+پیغام)\s+(.+)",
+        command,
+        re.IGNORECASE
+    )
 
-        # Clean up input (trim whitespaces and handle case)
-        name = name.strip().lower()  # Normalize the name
+    if match:
+        name_urdu, subject, body = match.groups()
+
+        # Convert Urdu name to English using mapping
+        name = transliterate_urdu_to_english(name_urdu.strip())
+
         logging.info(f"Received command to send email to '{name}' with subject '{subject}' and body '{body}'")
 
         try:
             # Lookup recipient in the database
             recipient = Recipient.query.filter_by(name=name).first()
-            print(recipient)# Case-insensitive query
             if not recipient:
-                # If recipient not found, return registration message and do not proceed with email sending
-                #register_url = url_for('voice_assistant.register_recipient', _external=True)
                 logging.error(f"Recipient '{name}' not found in the database.")
-                return (f"No email found for {name}. Please register the recipient first. "
-                        f"<a href='#' data-toggle='modal' data-target='#addRecipientModal'>Click here to register</a>")
+                return f"No email found for {name}. Please register the recipient first. " \
+                       f"<a href='#' data-toggle='modal' data-target='#addRecipientModal'>Click here to register</a>"
 
-            # If recipient found, send the email
             logging.info(f"Sending email to {recipient.name} at {recipient.email} with subject: {subject}")
-            send_email(recipient.email, subject, body)  # Only called if recipient exists
+            send_email(recipient.email, subject, body)
             return f"Email sent to {recipient.name} ({recipient.email}) with subject: {subject}."
 
         except ValueError as ve:
-            # Specific error for invalid email format or sending error
             logging.error(f"ValueError: {ve}")
             return f"Failed to send email. Error: {ve}"
 
         except Exception as e:
-            # Catch all other exceptions
             logging.error(f"Error sending email: {e}")
             return "Failed to send email. Please check the email details and try again."
 
-    # Command did not match the expected format
-    return "Please provide email details in the format: 'send email to [name] with subject [subject] and body [body]'."
-
+    return "براہ کرم ای میل کی تفصیلات درج کریں: 'کو [نام] کا عنوان [عنوان] اور پیغام [پیغام]' یا 'send email to [name] with subject [subject] and body [body]'."
 
 def handle_set_reminder(command):
     match = re.search(r"set reminder for (.+?) at (.+)", command, re.IGNORECASE)
@@ -80,34 +159,30 @@ def set_reminder(reminder, time):
     except ValueError:
         raise ValueError("Invalid time format. Use 'YYYY-MM-DD HH:MM:SS'.")
 
-def handle_search_query(command):
-    match = re.search(r"search (.+)", command, re.IGNORECASE)
-    if match:
-        search_term = match.group(1).strip()
-        query_url = f"https://www.google.com/search?q={search_term}"
+
+def handle_search_query(query):
+    if query.strip():
+        query_url = f"https://www.google.com/search?q={quote(query.strip())}"
         webbrowser.open(query_url)
-        return f"Searching Google for '{search_term}'."
-    return "Please provide a search term in the format: 'search [term]'."
+        logging.debug(f"[DEBUG] Searching Google for: {query.strip()}")
+        return f"گوگل پر تلاش ہو رہی ہے '{query.strip()}'."
+    return "براہ کرم تلاش کی اصطلاح فراہم کریں۔"
 
 
-def handle_play_query(command):
-    match = re.search(r"play (.+)", command, re.IGNORECASE)
-    if match:
-        query = match.group(1).strip()
+def handle_play_query(query):
+    if query.strip():
         try:
-            # Fetch the first YouTube video result
-            search_url = f"https://www.youtube.com/results?search_query={quote(query)}"
+            search_url = f"https://www.youtube.com/results?search_query={quote(query.strip())}"
             response = requests.get(search_url).text
 
-            # Extract video ID using regex
             video_id_match = re.search(r"\"videoId\":\"([^\"]+)\"", response)
             if video_id_match:
                 video_id = video_id_match.group(1)
                 youtube_url = f"https://www.youtube.com/watch?v={video_id}"
                 webbrowser.open(youtube_url)
-                return f"Playing '{query}' on YouTube."
-            else:
-                return "No results found on YouTube."
+                return f"یوٹیوب پر '{query.strip()}' چل رہا ہے۔"
+            return "یوٹیوب پر کچھ نہیں ملا۔"
         except Exception as e:
-            return f"Failed to play music. Error: {str(e)}"
-    return "Please provide a query in the format: 'play [query]'."
+            return f"یوٹیوب پر تلاش ناکام رہی۔ غلطی: {str(e)}"
+
+    return "براہ کرم گانے کا نام فراہم کریں۔"

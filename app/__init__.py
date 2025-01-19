@@ -14,6 +14,7 @@ from flask_migrate import Migrate
 from sqlalchemy.orm import DeclarativeBase
 from config import Config
 
+
 # Base declaration for models
 class Base(DeclarativeBase):
     pass
@@ -31,9 +32,10 @@ migrate = Migrate()
 def create_app():
     # Initialize logging first
     logging.basicConfig(
-        level=logging.INFO,  # Adjust level as needed (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        level=logging.DEBUG,  # Change from INFO to DEBUG
         format='%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]',
     )
+
     app = Flask(__name__)
     app.config.from_object(Config)
 

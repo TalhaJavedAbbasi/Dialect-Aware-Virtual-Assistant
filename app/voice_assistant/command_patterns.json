@@ -1,0 +1,196 @@
+{
+  "commands": {
+    "send email": {
+      "patterns": {
+        "urdu": "(ای میل.*بھیجیں.*کو\\s+.+?\\s+کا\\s+عنوان\\s+.+?\\s+اور\\s+پیغام\\s+.+|کو\\s+.+?\\s+کا\\s+عنوان\\s+.+?\\s+اور\\s+پیغام\\s+.+)",
+        "english": "(send email.*to\\s+.+?\\s+with\\s+subject\\s+.+?\\s+and\\s+body\\s+.+|to\\s+.+?\\s+with\\s+subject\\s+.+?\\s+and\\s+body\\s+.+)"
+      }
+    },
+    "set reminder": {
+      "patterns": {
+        "urdu": "(یاد دہانی.*سیٹ کریں|یاد دہانی رکھیں|یاد دہانی مقرر کریں)",
+        "english": "(set reminder.*for.*at.*)"
+      }
+    },
+    "search": {
+      "patterns": {
+        "urdu": "(تلاش کریں.*|ڈھونڈیں.*)",
+        "english": "(search.*)"
+      }
+    },
+    "play": {
+      "patterns": {
+        "urdu": "(چلائیں.*|پلے کریں.*)",
+        "english": "(play.*)"
+      }
+    },
+    "open youtube": {
+      "patterns": {
+        "urdu": "(یوٹیوب.*(کھولو|کھول|چلاو|چالو)|((کھولو|کھول|چلاو|چالو).*یوٹیوب))",
+        "english": "(open.*youtube|youtube.*open|launch.*youtube|start.*youtube)"
+      },
+      "synonyms": ["launch youtube", "start youtube"]
+    },
+    "open facebook": {
+      "patterns": {
+        "urdu": "(فیس بک.*(کھولو|کھول|چلاو|چالو)|((کھولو|کھول|چلاو|چالو).*فیس بک))",
+        "english": "(open.*facebook|facebook.*open|launch.*facebook|start.*facebook)"
+      },
+      "synonyms": ["launch facebook", "start facebook"]
+    },
+    "open google": {
+      "patterns": {
+        "urdu": "(گوگل.*(کھولو|کھول|چلاو|چالو)|((کھولو|کھول|چلاو|چالو).*گوگل))",
+        "english": "(open.*google|google.*open|launch.*google|start.*google)"
+      },
+      "synonyms": ["launch google", "start google"]
+    },
+    "open linkedin": {
+      "patterns": {
+        "urdu": "(لنکڈ ان.*(کھولو|کھول|چلاو|چالو)|((کھولو|کھول|چلاو|چالو).*لنکڈ ان))",
+        "english": "(open.*linkedin|linkedin.*open|launch.*linkedin|start.*linkedin)"
+      },
+      "synonyms": ["launch linkedin", "start linkedin"]
+    },
+    "open instagram": {
+      "patterns": {
+        "urdu": "(انسٹاگرام.*(کھولو|کھول|چلاو|چالو)|((کھولو|کھول|چلاو|چالو).*انسٹاگرام))",
+        "english": "(open.*instagram|instagram.*open|launch.*instagram|start.*instagram)"
+      },
+      "synonyms": ["launch instagram", "start instagram"]
+    },
+    "open github": {
+      "patterns": {
+        "urdu": "(گٹ ہب.*(کھولو|کھول|چلاو|چالو)|((کھولو|کھول|چلاو|چالو).*گٹ ہب))",
+        "english": "(open.*github|github.*open|launch.*github|start.*github)"
+      },
+      "synonyms": ["launch github", "start github"]
+    },
+    "open stackoverflow": {
+      "patterns": {
+        "urdu": "(اسٹیک اوور فلو.*(کھولو|کھول|چلاو|چالو)|((کھولو|کھول|چلاو|چالو).*اسٹیک اوور فلو))",
+        "english": "(open.*stackoverflow|stackoverflow.*open|launch.*stackoverflow|start.*stackoverflow)"
+      },
+      "synonyms": ["stack overflow", "stack over flow", "launch stackoverflow", "start stackoverflow"]
+    },
+    "open w3schools": {
+      "patterns": {
+        "urdu": "(ڈبلیو 3 اسکولز.*(کھولو|کھول|چلاو|چالو)|((کھولو|کھول|چلاو|چالو).*ڈبلیو 3 اسکولز))",
+        "english": "(open.*w3schools|w3schools.*open|launch.*w3schools|start.*w3schools)"
+      },
+      "synonyms": ["launch w3schools", "start w3schools"]
+    },
+    "open geeksforgeeks": {
+      "patterns": {
+        "urdu": "(گیکس فار گیکس.*(کھولو|کھول|چلاو|چالو)|((کھولو|کھول|چلاو|چالو).*گیکس فار گیکس))",
+        "english": "(open.*geeksforgeeks|geeksforgeeks.*open|launch.*geeksforgeeks|start.*geeksforgeeks)"
+      },
+      "synonyms": ["geeks for geeks", "gfg", "launch geeksforgeeks", "start geeksforgeeks"]
+    },
+    "open coursera": {
+      "patterns": {
+        "urdu": "(کورسرا.*(کھولو|کھول|چلاو|چالو)|((کھولو|کھول|چلاو|چالو).*کورسرا))",
+        "english": "(open.*coursera|coursera.*open|launch.*coursera|start.*coursera)"
+      },
+      "synonyms": ["launch coursera", "start coursera"]
+    },
+    "open udemy": {
+      "patterns": {
+        "urdu": "(یوڈیمی.*(کھولو|کھول|چلاو|چالو)|((کھولو|کھول|چلاو|چالو).*یوڈیمی))",
+        "english": "(open.*udemy|udemy.*open|launch.*udemy|start.*udemy)"
+      },
+      "synonyms": ["launch udemy", "start udemy"]
+    },
+    "open codeforces": {
+      "patterns": {
+        "urdu": "(کوڈ فورسز.*(کھولو|کھول|چلاو|چالو)|((کھولو|کھول|چلاو|چالو).*کوڈ فورسز))",
+        "english": "(open.*codeforces|codeforces.*open|launch.*codeforces|start.*codeforces)"
+      },
+      "synonyms": ["launch codeforces", "start codeforces"]
+    },
+    "open leetcode": {
+      "patterns": {
+        "urdu": "(لیٹ کوڈ.*(کھولو|کھول|چلاو|چالو)|((کھولو|کھول|چلاو|چالو).*لیٹ کوڈ))",
+        "english": "(open.*leetcode|leetcode.*open|launch.*leetcode|start.*leetcode)"
+      },
+      "synonyms": ["lead code", "leet code", "launch leetcode", "start leetcode"]
+    },
+    "open amazon": {
+      "patterns": {
+        "urdu": "(ایمازون.*(کھولو|کھول|چلاو|چالو)|((کھولو|کھول|چلاو|چالو).*ایمازون))",
+        "english": "(open.*amazon|amazon.*open|launch.*amazon|start.*amazon)"
+      },
+      "synonyms": ["launch amazon", "start amazon"]
+    },
+    "open reddit": {
+      "patterns": {
+        "urdu": "(ریڈٹ.*(کھولو|کھول|چلاو|چالو)|((کھولو|کھول|چلاو|چالو).*ریڈٹ))",
+        "english": "(open.*reddit|reddit.*open|launch.*reddit|start.*reddit)"
+      },
+      "synonyms": ["launch reddit", "start reddit"]
+    },
+    "open netflix": {
+      "patterns": {
+        "urdu": "(نیٹ فلکس.*(کھولو|کھول|چلاو|چالو)|((کھولو|کھول|چلاو|چالو).*نیٹ فلکس))",
+        "english": "(open.*netflix|netflix.*open|launch.*netflix|start.*netflix)"
+      },
+      "synonyms": ["launch netflix", "start netflix"]
+    },
+    "open notepad": {
+      "patterns": {
+        "urdu": "(نوٹ پیڈ.*(کھولو|کھول|چلاو|چالو)|((کھولو|کھول|چلاو|چالو).*نوٹ پیڈ))",
+        "english": "(open.*notepad|notepad.*open|launch.*notepad|start.*notepad)"
+      },
+      "synonyms": ["launch notepad", "start notepad"]
+    },
+    "open calculator": {
+      "patterns": {
+        "urdu": "(کیلکولیٹر.*(کھولو|کھول|چلاو|چالو)|((کھولو|کھول|چلاو|چالو).*کیلکولیٹر))",
+        "english": "(open.*calculator|calculator.*open|launch.*calculator|start.*calculator)"
+      },
+      "synonyms": ["launch calculator", "start calculator"]
+    },
+    "open vscode": {
+      "patterns": {
+        "urdu": "(وی ایس کوڈ.*(کھولو|کھول|چلاو|چالو)|((کھولو|کھول|چلاو|چالو).*وی ایس کوڈ))",
+        "english": "(open.*vscode|vscode.*open|visual studio code.*open|launch.*vscode|start.*vscode)"
+      },
+      "synonyms": ["visual studio code", "launch vscode", "start vscode"]
+    },
+    "open pycharm": {
+      "patterns": {
+        "urdu": "(پائی چارم.*(کھولو|کھول|چلاو|چالو)|((کھولو|کھول|چلاو|چالو).*پائی چارم))",
+        "english": "(open.*pycharm|pycharm.*open|launch.*pycharm|start.*pycharm)"
+      },
+      "synonyms": ["launch pycharm", "start pycharm"]
+    },
+    "open word": {
+      "patterns": {
+        "urdu": "(ورڈ.*(کھولو|کھول|چلاو|چالو)|((کھولو|کھول|چلاو|چالو).*ورڈ))",
+        "english": "(open.*word|word.*open|launch.*word|start.*word)"
+      },
+      "synonyms": ["launch word", "start word", "microsoft word"]
+    },
+    "open powerpoint": {
+      "patterns": {
+        "urdu": "(پاور پوائنٹ.*(کھولو|کھول|چلاو|چالو)|((کھولو|کھول|چلاو|چالو).*پاور پوائنٹ))",
+        "english": "(open.*powerpoint|powerpoint.*open|launch.*powerpoint|start.*powerpoint)"
+      },
+      "synonyms": ["launch powerpoint", "start powerpoint"]
+    },
+    "open excel": {
+      "patterns": {
+        "urdu": "(ایکسسل.*(کھولو|کھول|چلاو|چالو)|((کھولو|کھول|چلاو|چالو).*ایکسسل))",
+        "english": "(open.*excel|excel.*open|launch.*excel|start.*excel)"
+      },
+      "synonyms": ["launch excel", "start excel"]
+    },
+    "open chrome": {
+      "patterns": {
+        "urdu": "(کروم.*(کھولو|کھول|چلاو|چالو)|((کھولو|کھول|چلاو|چالو).*کروم))",
+        "english": "(open.*chrome|chrome.*open|launch.*chrome|start.*chrome)"
+      },
+      "synonyms": ["launch chrome", "start chrome"]
+    }
+  }
+}

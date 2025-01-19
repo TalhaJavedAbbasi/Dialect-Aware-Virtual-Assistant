@@ -14,7 +14,8 @@ from langdetect import detect
 import re
 from app import mail, db
 from app.models import Recipient
-from .command_router import execute_complex_command
+from .command_router import execute_complex_command, normalize_urdu_command, classify_command, load_simple_commands, \
+    COMMAND_HANDLERS, execute_simple_command
 
 voice_assistant_bp = Blueprint('voice_assistant', __name__, template_folder='templates')
 
@@ -60,7 +61,7 @@ def determine_tts_settings(text):
             # Detect language using langdetect
             detected_language = detect(text)
 
-        print(detected_language)
+
 
         # Map detected languages to TTS settings
         if detected_language == "ur":
@@ -85,8 +86,7 @@ def text_to_speech():
         tts_settings = determine_tts_settings(text)
         lang = tts_settings["lang"]
         tld = tts_settings["tld"]
-        print(lang)
-        print(tld)
+
 
         # Generate TTS audio
         tts = gTTS(text, lang=lang, tld=tld)
@@ -106,6 +106,7 @@ def text_to_speech():
         print(f"Error during TTS generation: {str(e)}")
         return jsonify({"error": "Error generating audio response. Please try again later."}), 500
 
+
 def process_user_message(user_message):
     logging.debug(f"Processing user message: {user_message}")
 
@@ -113,44 +114,62 @@ def process_user_message(user_message):
     if 'context' not in session:
         session['context'] = {"messages": [], "state": {}}
 
-    # Update context with the user's message
-    session['context']["messages"].append({"role": "user", "content": user_message})
+    # Normalize command to detect action
+    normalized_command = normalize_urdu_command(user_message)
+    logging.debug(f"Normalized command: {normalized_command}")
+    print(normalized_command)
 
-    # Try to execute a complex command
-    command_response = execute_complex_command(user_message)
+    # Determine if the command is simple or complex
+    command_type = classify_command(normalized_command)
+
+    if command_type == "complex":
+        # Extract the parameters after the recognized command
+        command_action = normalized_command  # e.g., "search"
+        command_params = user_message.replace(normalized_command, "").strip()  # Get remaining part
+
+        logging.debug(f"Executing a complex command: {command_action} with parameters: {command_params}")
+
+        # Pass command and extracted parameters
+        command_response = execute_complex_command(command_action, command_params)
+
+    elif command_type == "simple":
+        logging.debug("Executing a simple command.")
+
+        # For simple commands, pass the full command text
+        command_response = execute_simple_command(normalized_command)
+
+
+    else:
+        logging.debug("Unrecognized command, falling back to Gemini.")
+        command_response = None
 
     if command_response:
-        # Recognized and executed a complex command
+        # Add the response to the session context and return it
         formatted_response = markdown(command_response)
         session['context']["messages"].append({"role": "assistant", "content": formatted_response})
         session.modified = True
         return formatted_response
 
-    # If no complex command was recognized, proceed with Gemini response
+    # If no complex command was recognized, fallback to Gemini for response
     logging.debug("Falling back to Gemini for response.")
     conversation_context = [
         f"{message['role']}: {message['content']}" for message in session['context']["messages"]
     ]
     context_string = "\n".join(conversation_context)
 
-    # Use the full context with a concise instruction
     prompt = (
-        f"You are a voice assistant. Your interface with users will be voice. You should use short and concise responses, "
+        f"You are a voice assistant. Use short and concise responses, "
         f"avoiding unpronounceable punctuation. Use the following conversation context to respond:\n"
         f"{context_string}\n\n"
         f"User: {user_message}"
     )
 
-    # Generate response from Gemini
     response = model.generate_content(prompt)
 
-    # Format the response as markdown and update context
     formatted_response = markdown(response.text)
     session['context']["messages"].append({"role": "assistant", "content": formatted_response})
     session.modified = True
     return formatted_response
-
-
 
 
 @voice_assistant_bp.route('/api/audio-input', methods=['POST'])

@@ -162,8 +162,9 @@ function startRecording() {
       mediaRecorder.start();
       isRecording = true;
 
-      // Show custom recording notification
-      showNotification("Recording...");
+      // Show custom recording notification as toast
+      addMessage('system', 'Recording...', true);
+
 
       micButton.style.background = "#ff4d4d"; // Change mic button to red
     })
@@ -194,8 +195,8 @@ function stopRecording() {
     // Reset mic button appearance
     micButton.style.background = "light-dark(#007bff, #5f6368)";
 
-    // Hide recording notification
-    hideNotification();
+     // Show toast notification when recording stops
+    addMessage('system', 'Recording stopped. Processing...', true);
 
     // Show loader when processing audio
     loader.style.display = 'flex';
@@ -206,8 +207,7 @@ function stopRecording() {
 async function sendAudioToServer(audioBlob) {
     const formData = new FormData();
     formData.append('audio', audioBlob, 'input.wav');
-    console.log('Sending audio to server...');
-    console.log('Audio blob:', audioBlob);
+    addMessage('system', 'Sending audio to server...', true);
 
     try {
         const response = await fetch('/api/audio-input', {
@@ -216,31 +216,25 @@ async function sendAudioToServer(audioBlob) {
         });
 
         const data = await response.json();
-        console.log('Server response:', data);
-
-        // Hide loader when transcription is ready
         loader.style.display = 'none';
 
         if (data.user_message && data.assistant_response) {
-            // Show transcribed message as user message
             addMessage('user', data.user_message);
-
-            // Show loader while processing response
             loader.style.display = 'flex';
-
             setTimeout(() => {
-                loader.style.display = 'none'; // Hide loader after response is ready
-                addMessage('assistant', data.assistant_response); // Display assistant's response
-            }, 1000); // Simulate loader delay for better UI
+                loader.style.display = 'none';
+                addMessage('assistant', data.assistant_response);
+            }, 1000);
         } else {
-            addMessage('assistant', 'Audio unclear. Please try again.');
+            addMessage('system', 'Audio unclear. Please try again.', true);
         }
     } catch (error) {
         console.error('Error sending audio to server:', error);
         loader.style.display = 'none';
-        addMessage('assistant', 'Error processing audio. Please try again.');
+        addMessage('system', 'Error processing audio. Please try again.', true);
     }
 }
+
 
 
 // Play TTS response
@@ -272,25 +266,33 @@ async function playAudioResponse(text) {
 }
 
 
-// Modify message addition for the assistant
-function addMessage(role, content) {
+function addMessage(role, content, isNotification = false) {
   const message = document.createElement('div');
   message.classList.add('Message');
   message.setAttribute('data-role', role);
 
-  if (role === 'assistant') {
-    message.innerHTML = content;
-    chatContainer.appendChild(message);
-
-    // Trigger TTS playback for assistant messages
-    playAudioResponse(content.replace(/(<([^>]+)>)/gi, '')); // Remove HTML tags for TTS
+  if (isNotification) {
+    // Show toast notification instead of adding to chat
+    showToast(content, true);
   } else {
-    message.textContent = content;
-    chatContainer.appendChild(message);
+    if (role === 'assistant') {
+      message.innerHTML = content;
+      chatContainer.appendChild(message);
+
+      // Trigger TTS playback for assistant messages (excluding mic errors)
+      if (!content.includes("microphone") && !content.includes("audio")) {
+        playAudioResponse(content.replace(/(<([^>]+)>)/gi, '')); // Remove HTML tags for TTS
+      }
+    } else {
+      message.textContent = content;
+      chatContainer.appendChild(message);
+    }
   }
 
   chatContainer.scrollTop = chatContainer.scrollHeight; // Auto-scroll to latest message
 }
+
+
 
   // Handle message sending
   sendButton.addEventListener('click', async () => {
@@ -419,17 +421,18 @@ document.getElementById("confirm-reset-button").addEventListener("click", async 
 
 // Show toast notifications
 function showToast(message, isError = false) {
-    const toast = document.createElement("div");
-    toast.className = `Toast ${isError ? "Toast--error" : "Toast--success"}`;
-    toast.textContent = message;
+  const toast = document.createElement("div");
+  toast.className = `Toast ${isError ? "Toast--error" : "Toast--success"}`;
+  toast.textContent = message;
 
-    document.body.appendChild(toast);
+  document.body.appendChild(toast);
 
-    setTimeout(() => {
-        toast.classList.add("Toast--hide");
-        setTimeout(() => toast.remove(), 500);
-    }, 3000);
+  setTimeout(() => {
+    toast.classList.add("Toast--hide");
+    setTimeout(() => toast.remove(), 500);
+  }, 3000);
 }
+
 
 
 document.getElementById('registerRecipientForm').addEventListener('submit', async function (e) {
