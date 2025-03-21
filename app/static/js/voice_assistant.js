@@ -94,13 +94,14 @@ sendButton.addEventListener('click', async () => {
     });
 
     const data = await response.json();
-    console.log("Raw API Response:", data);  // ✅ Log the entire response
-
     loader.style.display = 'none';
 
-    if (data.assistant_response) {
-        // Add assistant message
-        addMessageWithTone('assistant', data.assistant_response, data.detected_tone);
+
+    // Hide loader
+    loader.style.display = 'none';
+
+    if (data.response) {
+      addMessage('assistant', data.response, );
     } else {
       addMessage('assistant', 'Sorry, something went wrong.');
     }
@@ -291,67 +292,6 @@ function addMessage(role, content) {
   chatContainer.scrollTop = chatContainer.scrollHeight; // Auto-scroll to latest message
 }
 
-function addMessageWithTone(role, content, detectedTone) {
-    const message = document.createElement('div');
-    message.classList.add('Message');
-    message.setAttribute('data-role', role);
-
-    if (role === 'assistant' && ["Happy", "Sad", "Frustrated"].includes(detectedTone)) {
-        message.innerHTML = `
-
-                ${content}
-                <div class="tone-info">
-                    <span class="tone-label">Detected Tone: <strong>${detectedTone}</strong></span>
-                    <button class="correct-tone-btn" onclick="showCorrectionModal('${detectedTone}')">
-                        Feedback on Tone Analysis
-                    </button>
-                </div>
-
-        `;
-    } else {
-        message.innerHTML = `<div class="assistant-response">${content}</div>`;
-    }
-
-    chatContainer.appendChild(message);
-    chatContainer.scrollTop = chatContainer.scrollHeight;
-}
-
-
-
-
-
-let originalTone = "";
-
-function showCorrectionModal(detectedTone) {
-    originalTone = detectedTone; // Store the current tone
-    document.getElementById("tone-correction-modal").style.display = "block";
-}
-
-function closeCorrectionModal() {
-    document.getElementById("tone-correction-modal").style.display = "none";
-}
-
-async function submitToneCorrection() {
-    const correctTone = document.getElementById("correct-tone").value;
-
-    const response = await fetch("/api/submit-tone-feedback", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ original_tone: originalTone, correct_tone: correctTone })
-    });
-
-    const data = await response.json();
-
-    if (response.ok) {
-        showToast(data.message, false);
-    } else {
-        showToast("Failed to update tone. Try again.", true);
-    }
-
-    closeCorrectionModal();
-}
-
-
   // Handle message sending
   sendButton.addEventListener('click', async () => {
     const userMessage = chatInput.value.trim();
@@ -388,29 +328,6 @@ document.getElementById("chat-input").addEventListener("keydown", function (even
     document.getElementById("send-button").click(); // Trigger the send button click
   }
 });
-
-// Open Mood Summary Modal
-document.getElementById("mood-summary-button").addEventListener("click", function() {
-    fetch("/api/mood-summary")
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById("mood-summary-text").innerHTML = data.message;
-            document.getElementById("mood-summary-modal").classList.add("show");
-        })
-        .catch(error => console.error("Error fetching mood summary:", error));
-});
-
-// Close Mood Summary Modal
-document.getElementById("close-mood-modal").addEventListener("click", function() {
-    document.getElementById("mood-summary-modal").classList.remove("show");
-});
-
-document.getElementById("tone-overview-button").addEventListener("click", function() {
-        window.location.href = "/tone-overview";
-    });
-
-
-
 
 
 // Trigger modal on Reset Context button click

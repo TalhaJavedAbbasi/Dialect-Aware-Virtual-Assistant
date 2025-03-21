@@ -351,129 +351,36 @@ body {
   }
 }
 
-/* General Modal Styling */
+/* Modal styling */
 .Modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.4); /* Dim background */
-    align-items: center;
-    justify-content: center;
-    transition: opacity 0.3s ease-in-out;
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
 }
 
-/* Show Modal with Smooth Fade-In */
-.Modal.show {
-    display: flex;
-    opacity: 1;
-}
-
-/* Modal Content */
 .ModalContent {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
-    width: 350px;
-    max-width: 90%;
-    box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.3);
-    animation: fadeIn 0.3s ease-in-out;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
-/* Modal Fade-In Animation */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Modal Titles */
-.ModalTitle {
-    font-size: 20px;
-    font-weight: bold;
-    margin-bottom: 10px;
-    color: #333;
-}
-
-/* Buttons Styling */
-.ModalButton {
-    padding: 10px 15px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background 0.3s ease;
-}
-
-/* Close & Cancel Buttons */
-.ModalButton--close,
 .ModalButton--cancel {
-    background-color: #dc3545;
-    color: white;
+  background-color: #dc3545;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
 }
-
-.ModalButton--close:hover,
-.ModalButton--cancel:hover {
-    background-color: #b02a37;
-}
-
-/* Primary Button */
-.ModalButton--primary {
-    background-color: #007bff;
-    color: white;
-}
-
-.ModalButton--primary:hover {
-    background-color: #0056b3;
-}
-
-/* Mood Summary Text Styling */
-#modal-mood-summary {
-    font-size: 16px;
-    font-weight: 500;
-    color: #555;
-    margin-top: 15px;
-}
-
-canvas {
-    max-width: 100%;
-    height: 250px !important; /* Fix the height */
-}
-
-.tone-info {
-    display: flex;
-    flex-direction: column;  /* Aligns elements vertically */
-    align-items: flex-start; /* Aligns to the left */
-    margin-top: 10px;
-    align-text: center
-}
-
-.tone-label {
-    font-weight: bold;
-    font-size: 14px;
-    color: #333;
-    margin-bottom: 2px;  /* Adds space between label and button */
-}
-
-.correct-tone-btn {
-    white-space: nowrap;
-    padding: 3px 5px;
-}
-
-
-.correct-tone-btn:hover {
-    background: #007BFF;
-    color: sky;
-}
-
-.assistant-response {
-    display: inline-block;
-    max-width: 100%;
-    word-wrap: break-word;
-}
-
-
-

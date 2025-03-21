@@ -1,7 +1,7 @@
 from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship, DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import Integer, String, Text, ForeignKey, DateTime, func
+from sqlalchemy import Integer, String, Text
 from app import db
 
 
@@ -36,18 +36,6 @@ class User(UserMixin,db.Model):
     comments = relationship("Comment", back_populates="comment_author")
     recipients = relationship("Recipient", back_populates="user", cascade="all, delete-orphan")
 
-
-class UserMood(db.Model):
-    __tablename__ = "user_moods"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
-    mood: Mapped[str] = mapped_column(String(50), nullable=False)  # Happy, Sad, Frustrated
-    timestamp: Mapped[DateTime] = mapped_column(DateTime, default=func.now())  # Auto timestamp
-
-    user = relationship("User", back_populates="moods")
-
-
-User.moods = relationship("UserMood", back_populates="user", cascade="all, delete-orphan")
 
 class Recipient(db.Model):
     id = db.Column(db.Integer, primary_key=True)
