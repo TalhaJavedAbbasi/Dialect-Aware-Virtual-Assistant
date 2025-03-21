@@ -19,9 +19,13 @@
             <button class="FABMenuButton ResetButton" id="reset-context-button" title="Reset Context">Reset</button>
             <button class="FABMenuButton HelpButton" id="help-button" title="View Complex Commands">Help</button>
             <button class="FABMenuButton" id="test-modal-button" data-toggle="modal" data-target="#addRecipientModal">Test Modal</button>
+            <button class="FABMenuButton" id="mood-summary-button" title="View Mood Summary">Mood Summary</button>
+            <button class="FABMenuButton" id="tone-overview-button" title="View Tone Overview">Tone Overview</button>
+
         </div>
     </div>
 
+<div id="toast" class="toast">Feedback submitted successfully!</div>
 
 
     <div class="ChatContainer" id="chat-container">
@@ -88,6 +92,37 @@
         <button class="ModalButton ModalButton--cancel" id="close-help-modal">Close</button>
     </div>
 </div>
+
+<!-- Mood Summary Modal -->
+<div id="mood-summary-modal" class="Modal">
+    <div class="ModalContent">
+        <h3 class="ModalTitle">Mood Summary</h3>
+        <p id="mood-summary-text">Fetching mood summary...</p>
+        <!-- Inside Mood Summary Modal -->
+        <a href="/tone-overview" class="ModalButton ModalButton--primary">View Detailed Insights</a>
+        <button class="ModalButton ModalButton--close" id="close-mood-modal">Close</button>
+    </div>
+</div>
+
+<!-- Tone Correction Modal -->
+<div id="tone-correction-modal" class="Modal">
+    <div class="ModalContent">
+        <h3>Correct Tone Analysis</h3>
+        <p>Select the correct tone:</p>
+        <select id="correct-tone">
+            <option value="Happy">Happy 😊</option>
+            <option value="Sad">Sad 😢</option>
+            <option value="Frustrated">Frustrated 😡</option>
+<!--            <option value="Neutral">Neutral 😐</option>-->
+        </select>
+        <div class="modal-actions">
+            <button class="ModalButton ModalButton--confirm" onclick="submitToneCorrection()">Submit</button>
+            <button class="ModalButton ModalButton--cancel" onclick="closeCorrectionModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+
     <!-- Add Recipient Modal -->
 <div class="modal" id="addRecipientModal" tabindex="-1" role="dialog">
   <div class="modal-dialog" role="document">
