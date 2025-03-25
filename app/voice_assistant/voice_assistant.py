@@ -14,6 +14,7 @@ from langdetect import detect
 import re
 from app import mail, db
 from app.models import Recipient
+from app.stt_openai import transcribe_with_openai, convert_to_wav
 from .command_router import execute_complex_command, normalize_urdu_command, classify_command, load_simple_commands, \
     COMMAND_HANDLERS, execute_simple_command
 
@@ -172,44 +173,69 @@ def process_user_message(user_message):
     return formatted_response
 
 
+# @voice_assistant_bp.route('/api/audio-input', methods=['POST'])
+# def process_audio():
+#     if 'audio' not in request.files:
+#         return jsonify({"error": "No audio file provided"}), 400
+#
+#     audio_file = request.files['audio']
+#
+#     if audio_file:
+#         try:
+#             # Save the uploaded audio file
+#             filename = secure_filename(audio_file.filename)
+#             file_path = os.path.join(UPLOAD_FOLDER, filename)
+#             audio_file.save(file_path)
+#
+#             # Convert to WAV format for compatibility
+#             wav_path = convert_to_wav(file_path)
+#
+#             # Transcribe audio using SpeechRecognition
+#             accent = "en-UR"  # Default to Urdu accent, modify as needed
+#             transcription = transcribe_with_speech_recognition(wav_path, accent)
+#
+#             # Logging transcription for debugging
+#             logging.debug(f"Transcription output: {transcription}")
+#
+#             # Process the transcription with the shared function
+#             assistant_response = process_user_message(transcription)
+#
+#             # Return both user and assistant messages
+#             return jsonify({
+#                 "user_message": transcription,
+#                 "assistant_response": assistant_response
+#             })
+#
+#         except Exception as e:
+#             logging.error(f"Error processing audio: {str(e)}")
+#             return jsonify({"error": str(e)}), 500
+#
+#     return jsonify({"error": "Invalid audio input"}), 400
+
 @voice_assistant_bp.route('/api/audio-input', methods=['POST'])
 def process_audio():
     if 'audio' not in request.files:
         return jsonify({"error": "No audio file provided"}), 400
 
     audio_file = request.files['audio']
+    filename = secure_filename(audio_file.filename)
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+    audio_file.save(file_path)
 
-    if audio_file:
-        try:
-            # Save the uploaded audio file
-            filename = secure_filename(audio_file.filename)
-            file_path = os.path.join(UPLOAD_FOLDER, filename)
-            audio_file.save(file_path)
+    # Convert to WAV format for compatibility
+    wav_path = convert_to_wav(file_path)
 
-            # Convert to WAV format for compatibility
-            wav_path = convert_to_wav(file_path)
+    # Use OpenAI for transcription
+    transcription = transcribe_with_openai(wav_path)
 
-            # Transcribe audio using SpeechRecognition
-            accent = "en-UR"  # Default to Urdu accent, modify as needed
-            transcription = transcribe_with_speech_recognition(wav_path, accent)
+    logging.debug(f"Transcription output: {transcription}")
 
-            # Logging transcription for debugging
-            logging.debug(f"Transcription output: {transcription}")
+    assistant_response = process_user_message(transcription)
 
-            # Process the transcription with the shared function
-            assistant_response = process_user_message(transcription)
-
-            # Return both user and assistant messages
-            return jsonify({
-                "user_message": transcription,
-                "assistant_response": assistant_response
-            })
-
-        except Exception as e:
-            logging.error(f"Error processing audio: {str(e)}")
-            return jsonify({"error": str(e)}), 500
-
-    return jsonify({"error": "Invalid audio input"}), 400
+    return jsonify({
+        "user_message": transcription,
+        "assistant_response": assistant_response
+    })
 
 
 # Function to generate response from Gemini

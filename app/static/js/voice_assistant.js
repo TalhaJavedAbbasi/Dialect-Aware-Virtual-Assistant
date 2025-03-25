@@ -204,10 +204,43 @@ function stopRecording() {
 }
 
 
+//async function sendAudioToServer(audioBlob) {
+//    const formData = new FormData();
+//    formData.append('audio', audioBlob, 'input.wav');
+//    console.log('Sending audio to server...');
+//    console.log('Audio blob:', audioBlob);
+//
+//    try {
+//        const response = await fetch('/api/audio-input', {
+//            method: 'POST',
+//            body: formData
+//        });
+//
+//        const data = await response.json();
+//        console.log('Server response:', data);
+//
+//        // Hide loader when transcription is ready
+//        loader.style.display = 'none';
+//
+//        if (data.user_message && data.assistant_response) {
+//            addMessage('user', data.user_message);
+//            addMessage('assistant', data.assistant_response); // Properly categorize response
+//        } else {
+//            // If audio is unclear, display as a system notification
+//            addMessage('system', 'Audio not clear enough to transcribe.', true);
+//        }
+//    } catch (error) {
+//        console.error('Error sending audio to server:', error);
+//        loader.style.display = 'none';
+//        addMessage('assistant', 'Error processing audio. Please try again.');
+//    }
+//}
+
 async function sendAudioToServer(audioBlob) {
     const formData = new FormData();
     formData.append('audio', audioBlob, 'input.wav');
-    addMessage('system', 'Sending audio to server...', true);
+
+    loader.style.display = 'block';  // Show loader before fetch
 
     try {
         const response = await fetch('/api/audio-input', {
@@ -216,24 +249,23 @@ async function sendAudioToServer(audioBlob) {
         });
 
         const data = await response.json();
-        loader.style.display = 'none';
+        console.log('Server response:', data);
+
+        loader.style.display = 'none';  // Hide loader after response
 
         if (data.user_message && data.assistant_response) {
             addMessage('user', data.user_message);
-            loader.style.display = 'flex';
-            setTimeout(() => {
-                loader.style.display = 'none';
-                addMessage('assistant', data.assistant_response);
-            }, 1000);
+            addMessage('assistant', data.assistant_response);
         } else {
-            addMessage('system', 'Audio unclear. Please try again.', true);
+            addMessage('system', 'Audio not clear enough to transcribe.', true);
         }
     } catch (error) {
         console.error('Error sending audio to server:', error);
         loader.style.display = 'none';
-        addMessage('system', 'Error processing audio. Please try again.', true);
+        addMessage('assistant', 'Error processing audio. Please try again.');
     }
 }
+
 
 
 
@@ -279,7 +311,7 @@ function addMessage(role, content, isNotification = false) {
       message.innerHTML = content;
       chatContainer.appendChild(message);
 
-      // Trigger TTS playback for assistant messages (excluding mic errors)
+      // Avoid TTS for system notifications
       if (!content.includes("microphone") && !content.includes("audio")) {
         playAudioResponse(content.replace(/(<([^>]+)>)/gi, '')); // Remove HTML tags for TTS
       }
@@ -291,6 +323,7 @@ function addMessage(role, content, isNotification = false) {
 
   chatContainer.scrollTop = chatContainer.scrollHeight; // Auto-scroll to latest message
 }
+
 
 
 

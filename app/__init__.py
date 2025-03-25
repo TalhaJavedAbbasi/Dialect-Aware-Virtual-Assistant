@@ -68,6 +68,7 @@ def create_app():
     from .tts import tts_bp
     from app.profile import profile_bp
     from app.voice_assistant.voice_assistant import voice_assistant_bp
+    from app.stt_openai import stt_openai_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(oauth_bp)
@@ -79,5 +80,6 @@ def create_app():
     app.register_blueprint(tts_bp)
     app.register_blueprint(profile_bp)
     app.register_blueprint(voice_assistant_bp)
+    app.register_blueprint(stt_openai_bp, url_prefix='/stt_openai')
 
     return app

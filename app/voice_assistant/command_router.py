@@ -11,6 +11,7 @@ from rapidfuzz import fuzz
 COMMAND_HANDLERS = {
     "open": open_generic,  # Single handler for websites/apps
     "send email": handle_send_email,
+    "ای میل بھیجیں": handle_send_email,
     "set reminder": handle_set_reminder,
     "search": handle_search_query,
     "play": handle_play_query,
