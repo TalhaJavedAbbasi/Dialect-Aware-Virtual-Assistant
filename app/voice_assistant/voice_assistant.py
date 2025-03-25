@@ -1,6 +1,7 @@
 import time
 import logging
-from flask import Blueprint, render_template, request, jsonify, session
+from datetime import datetime
+from flask import Blueprint, render_template, request, jsonify, session, Response
 from flask_login import current_user
 from app.stt import transcribe_with_speech_recognition, convert_to_wav
 from werkzeug.utils import secure_filename
@@ -13,7 +14,7 @@ import tempfile
 from langdetect import detect
 import re
 from app import mail, db
-from app.models import Recipient
+from app.models import Recipient, UserMood
 from .command_router import execute_complex_command
 
 voice_assistant_bp = Blueprint('voice_assistant', __name__, template_folder='templates')
@@ -106,52 +107,165 @@ def text_to_speech():
         print(f"Error during TTS generation: {str(e)}")
         return jsonify({"error": "Error generating audio response. Please try again later."}), 500
 
+
 def process_user_message(user_message):
     logging.debug(f"Processing user message: {user_message}")
 
-    # Initialize context if not present
     if 'context' not in session:
         session['context'] = {"messages": [], "state": {}}
 
-    # Update context with the user's message
     session['context']["messages"].append({"role": "user", "content": user_message})
 
-    # Try to execute a complex command
-    command_response = execute_complex_command(user_message)
+    # **Step 1: Check if the user is asking for mood summary**
+    mood_summary_queries_en = [
+        "what's my mood summary?", "whats my mood summary?", "tell me my mood history",
+        "how have I been feeling?", "mood summary"
+    ]
 
+    mood_summary_queries_ur = [
+        "میرا موڈ خلاصہ کیا ہے؟", "میرا موڈ خلاصہ کیا ہے", "مجھے اپنے موڈ کی تاریخ بتائیں",
+        "میں کیسا محسوس کر رہا ہوں؟", "موڈ کا خلاصہ"
+    ]
+
+    user_language = current_user.language if current_user.is_authenticated else "en"  # Default to English
+
+    if user_message.lower() in mood_summary_queries_en or user_message.strip() in mood_summary_queries_ur:
+        return get_mood_summary().json["message"]
+
+    # **Step 2: Try executing a complex command first**
+    command_response = execute_complex_command(user_message)
     if command_response:
-        # Recognized and executed a complex command
         formatted_response = markdown(command_response)
         session['context']["messages"].append({"role": "assistant", "content": formatted_response})
         session.modified = True
         return formatted_response
 
-    # If no complex command was recognized, proceed with Gemini response
-    logging.debug("Falling back to Gemini for response.")
+    # **Step 3: Evaluate Tone**
+    tone_prompt = f"""
+    Analyze the emotional tone of the following user message:
+
+    "{user_message}"
+
+    Respond with one of the following tones: Happy, Sad, Frustrated, Neutral.
+    """
+    tone_response = model.generate_content(tone_prompt).text.strip()
+
+    # **Step 4: Store detected mood in the database**
+    if tone_response in ["Happy", "Sad", "Frustrated"] and current_user.is_authenticated:
+        new_mood = UserMood(user_id=current_user.id, mood=tone_response)
+        db.session.add(new_mood)
+        db.session.commit()
+
+    # **Step 5: Generate Assistant Response**
     conversation_context = [
         f"{message['role']}: {message['content']}" for message in session['context']["messages"]
     ]
     context_string = "\n".join(conversation_context)
 
-    # Use the full context with a concise instruction
-    prompt = (
-        f"You are a voice assistant. Your interface with users will be voice. You should use short and concise responses, "
-        f"avoiding unpronounceable punctuation. Use the following conversation context to respond:\n"
-        f"{context_string}\n\n"
+    response_prompt = (
+        f"You are a voice assistant. Your interface with users will be voice. You should use short and concise responses. "
+        f"The user’s current emotional tone is: {tone_response}. Respond accordingly with empathy, 1 to 2 line sentence and an emoji(if tone is detected).\n\n"
+        f"Conversation history:\n{context_string}\n\n"
         f"User: {user_message}"
     )
 
-    # Generate response from Gemini
-    response = model.generate_content(prompt)
+    response = model.generate_content(response_prompt)
+    assistant_response = response.text.strip()
 
-    # Format the response as markdown and update context
-    formatted_response = markdown(response.text)
-    session['context']["messages"].append({"role": "assistant", "content": formatted_response})
+    # **Step 6: Store response & detected tone in session**
+
+    if tone_response in ["Happy", "Sad", "Frustrated"]:
+        session['context']["messages"].append(
+                {"role": "assistant", "content": f"(Detected Tone: {tone_response}) {assistant_response}"})
+    else:
+        session['context']["messages"].append({"role": "assistant", "content": assistant_response})
     session.modified = True
-    return formatted_response
+
+    return {  # ✅ Return a dictionary, NOT jsonify()
+        "user_message": user_message,
+        "detected_tone": tone_response,
+        "assistant_response": assistant_response
+    }
 
 
-
+# def process_user_message(user_message):
+#     logging.debug(f"Processing user message: {user_message}")
+#
+#     if 'context' not in session:
+#         session['context'] = {"messages": [], "state": {}}
+#
+#     session['context']["messages"].append({"role": "user", "content": user_message})
+#
+#     # **Step 1: Check if the user is asking for mood summary**
+#     mood_summary_queries_en = [
+#         "what's my mood summary?", "whats my mood summary?", "tell me my mood history",
+#         "how have I been feeling?", "mood summary"
+#     ]
+#
+#     mood_summary_queries_ur = [
+#         "میرا موڈ خلاصہ کیا ہے؟", "میرا موڈ خلاصہ کیا ہے", "مجھے اپنے موڈ کی تاریخ بتائیں",
+#         "میں کیسا محسوس کر رہا ہوں؟", "موڈ کا خلاصہ"
+#     ]
+#
+#     # Fetch user's preferred language
+#     user_language = current_user.language if current_user.is_authenticated else "en"  # Default to English
+#
+#     # **✅ If the user asked for mood summary, return immediately (NO TONE CHECK)**
+#     if user_message.lower() in mood_summary_queries_en or user_message.strip() in mood_summary_queries_ur:
+#         return get_mood_summary().json["message"]
+#
+#     # **Step 2: Try executing a complex command first**
+#     command_response = execute_complex_command(user_message)
+#     if command_response:
+#         formatted_response = markdown(command_response)
+#         session['context']["messages"].append({"role": "assistant", "content": formatted_response})
+#         session.modified = True
+#         return formatted_response
+#
+#     # **Step 3: Evaluate Tone**
+#     tone_prompt = f"""
+#     Analyze the emotional tone of the following user message:
+#
+#     "{user_message}"
+#
+#     Respond with one of the following tones: Happy, Sad, Frustrated, Neutral.
+#     """
+#     tone_response = model.generate_content(tone_prompt).text.strip()
+#
+#     # **Step 4: Store detected mood in the database (if user is logged in)**
+#     if tone_response in ["Happy", "Sad", "Frustrated"] and current_user.is_authenticated:
+#         new_mood = UserMood(user_id=current_user.id, mood=tone_response)
+#         db.session.add(new_mood)
+#         db.session.commit()
+#
+#     # **Step 5: Generate Assistant Response from Gemini**
+#     logging.debug("Falling back to Gemini for response.")
+#     conversation_context = [
+#         f"{message['role']}: {message['content']}" for message in session['context']["messages"]
+#     ]
+#     context_string = "\n".join(conversation_context)
+#
+#     response_prompt = (
+#         f"You are a voice assistant. Your interface with users will be voice. You should use short and concise responses, "
+#         f"avoiding unpronounceable punctuation. The user’s current emotional tone is: {tone_response}. "
+#         f"Respond accordingly with empathy and relevance.\n\n"
+#         f"Conversation history:\n{context_string}\n\n"
+#         f"User: {user_message}"
+#     )
+#
+#     response = model.generate_content(response_prompt)
+#     assistant_response = response.text.strip()
+#
+#     # **Step 6: Store response & detected tone in session**
+#     if tone_response in ["Happy", "Sad", "Frustrated"]:
+#         session['context']["messages"].append(
+#             {"role": "assistant", "content": f"(Detected Tone: {tone_response}) {assistant_response}"})
+#     else:
+#         session['context']["messages"].append({"role": "assistant", "content": assistant_response})
+#
+#     session.modified = True
+#
+#     return assistant_response
 
 @voice_assistant_bp.route('/api/audio-input', methods=['POST'])
 def process_audio():
@@ -231,8 +345,9 @@ def gemini_response():
 
     try:
         # Use the shared function for handling complex command checking and context-based response generation
-        response = process_user_message(user_message)
-        return jsonify({"response": response})
+        response_data = process_user_message(user_message)
+        logging.debug(f"API Response Data: {response_data}")  # ✅ Print the response
+        return jsonify(response_data)
 
     except ValueError as ve:
         logging.error(f"Validation error: {str(ve)}")
@@ -284,3 +399,118 @@ def register_recipient():
     except Exception as e:
         logging.error(f"Error registering recipient: {e}")
         return jsonify({"error": "Failed to register recipient. Please try again."}), 500
+
+
+@voice_assistant_bp.route('/api/mood-summary', methods=['GET'])
+def get_mood_summary():
+    """Fetches the mood summary for the logged-in user for today with enhanced language support."""
+    if not current_user.is_authenticated:
+        return jsonify({"error": "User not logged in."}), 403
+
+    # Get the user's preferred language from the database
+    user_language = current_user.language  # Fetches the stored language ('en' or 'ur')
+    print(user_language)
+
+    # Get today's date
+    today = datetime.utcnow().date()
+
+    # Retrieve today's mood entries
+    moods = UserMood.query.filter(
+        UserMood.user_id == current_user.id,
+        UserMood.timestamp >= datetime.combine(today, datetime.min.time()),
+        UserMood.timestamp <= datetime.combine(today, datetime.max.time())
+    ).order_by(UserMood.timestamp.desc()).all()
+
+    if not moods:
+        if user_language == "ur":
+            return jsonify({"message": "🌟 آج کے لیے کوئی موڈ ڈیٹا ریکارڈ نہیں کیا گیا۔ امید ہے کہ آپ خیریت سے ہیں! 😊"})
+        else:
+            return jsonify({"message": "🌟 No mood data recorded today. Hope you're doing well! 😊"})
+
+    # Define mood mapping with emojis
+    mood_emojis = {
+        "Happy": "😃",
+        "Sad": "😢",
+        "Frustrated": "😠"
+    }
+
+    # Urdu translations
+    mood_translate = {
+        "Happy": "خوش",
+        "Sad": "اداس",
+        "Frustrated": "مایوس"
+    }
+
+    mood_counts = {mood: 0 for mood in mood_emojis}
+    for mood_entry in moods:
+        if mood_entry.mood in mood_counts:
+            mood_counts[mood_entry.mood] += 1
+
+    total_moods = sum(mood_counts.values())
+    mood_percentages = {mood: round((count / total_moods) * 100, 1) for mood, count in mood_counts.items() if count > 0}
+
+    # **English Mood Summary**
+    mood_summary_en = " | ".join([
+        f"{mood_emojis[mood]} <strong>{mood}</strong> ({percent}%)"
+        for mood, percent in mood_percentages.items()
+    ])
+
+    # **Urdu Mood Summary**
+    mood_summary_ur = " | ".join([
+        f"{mood_emojis[mood]} <strong>{mood_translate[mood]}</strong> ({percent}%)"
+        for mood, percent in mood_percentages.items()
+    ])
+
+    # **Mood Trend Insights (Both Languages)**
+    dominant_mood = max(mood_percentages, key=mood_percentages.get)
+
+    mood_messages = {
+        "Happy": {
+            "en": "😊 You seem to be in good spirits today! Keep spreading positivity! 🌟",
+            "ur": "😊 آپ آج اچھے موڈ میں لگ رہے ہیں! مثبتیت پھیلانے کا سلسلہ جاری رکھیں! 🌟"
+        },
+        "Sad": {
+            "en": "😔 It looks like you're feeling a bit down. Remember, it's okay to have tough days. 💙",
+            "ur": "😔 لگتا ہے آپ آج تھوڑا افسردہ ہیں۔ یاد رکھیں، مشکل دن آتے ہیں، مگر سب ٹھیک ہو جاتا ہے۔ 💙"
+        },
+        "Frustrated": {
+            "en": "😡 Seems like frustration is high today. Try taking deep breaths and unwinding a bit. 🌿",
+            "ur": "😡 لگتا ہے کہ آج پریشانی زیادہ ہے۔ کچھ گہری سانسیں لیں اور خود کو پرسکون کریں۔ 🌿"
+        }
+    }
+
+    mood_trend_message = mood_messages[dominant_mood]["ur"] if user_language == "ur" else mood_messages[dominant_mood]["en"]
+
+    # Return the message in the appropriate language
+    return jsonify({
+        "message": f"📊 <strong>{'آج کا موڈ خلاصہ:' if user_language == 'ur' else "Today's Mood Summary:"}</strong> <br>"
+                   f"{mood_summary_ur if user_language == 'ur' else mood_summary_en}<br>{mood_trend_message}"
+    })
+
+@voice_assistant_bp.route('/api/submit-tone-feedback', methods=['POST'])
+def submit_tone_feedback():
+    """Stores user feedback for incorrect tone detection and updates the latest mood entry."""
+    if not current_user.is_authenticated:
+        return jsonify({"error": "User not logged in."}), 403
+
+    data = request.json
+    original_tone = data.get("original_tone")
+    correct_tone = data.get("correct_tone")
+
+    if not original_tone or not correct_tone:
+        return jsonify({"error": "Invalid data provided"}), 400
+
+    # Fetch the latest mood entry for this user
+    latest_mood = UserMood.query.filter_by(user_id=current_user.id).order_by(UserMood.timestamp.desc()).first()
+
+    if latest_mood:
+        latest_mood.mood = correct_tone  # Update the mood
+        db.session.commit()
+        logging.info(f"User corrected tone from {original_tone} → {correct_tone}")
+
+    return jsonify({"message": "Tone updated successfully! Thank you for your feedback."})
+
+
+
+
+
