@@ -14,6 +14,7 @@ from flask_migrate import Migrate
 from sqlalchemy.orm import DeclarativeBase
 from config import Config
 
+
 # Base declaration for models
 class Base(DeclarativeBase):
     pass
@@ -31,9 +32,10 @@ migrate = Migrate()
 def create_app():
     # Initialize logging first
     logging.basicConfig(
-        level=logging.INFO,  # Adjust level as needed (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        level=logging.DEBUG,  # Change from INFO to DEBUG
         format='%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]',
     )
+
     app = Flask(__name__)
     app.config.from_object(Config)
 
@@ -66,8 +68,10 @@ def create_app():
     from .tts import tts_bp
     from app.profile import profile_bp
     from app.voice_assistant.voice_assistant import voice_assistant_bp
+
+    from app.stt_openai import stt_openai_bp
+
     from .tone_dashboard import tone_dashboard_bp
-    from .voice_commands import voice_commands_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(oauth_bp)
@@ -79,7 +83,9 @@ def create_app():
     app.register_blueprint(tts_bp)
     app.register_blueprint(profile_bp)
     app.register_blueprint(voice_assistant_bp)
+    app.register_blueprint(stt_openai_bp, url_prefix='/stt_openai')
+
     app.register_blueprint(tone_dashboard_bp)
-    app.register_blueprint(voice_commands_bp)
 
     return app
+

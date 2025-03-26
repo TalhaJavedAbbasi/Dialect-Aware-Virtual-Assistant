@@ -62,70 +62,70 @@ sendButton.style.display = 'none'; // Initially hidden
 micButton.style.display = 'block'; // Initially shown
 
 
-sendButton.addEventListener('click', async () => {
-  const userMessage = chatInput.value.trim();
-  if (!userMessage) return;
-
-   // Disable chat controls
-  chatInput.disabled = true;
-  sendButton.disabled = true;
-
-  // Add user message to chat
-  addMessage('user', userMessage);
-  chatInput.value = '';
-
-  // Reset textarea height to its minimum and recalculate overflow
-  const lineHeight = parseInt(getComputedStyle(chatInput).lineHeight, 10); // Get line height
-  chatInput.style.height = `${lineHeight}px`;
-  chatInput.style.overflowY = "hidden"; // Hide overflow after reset
-
-  // Show loader
-  loader.style.display = 'flex';
-
-  // Send message to the server
-  try {
-// Send message to the server for Gemini response
-    const response = await fetch('/api/gemini-response', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ message: userMessage }),
-    });
-
-    const data = await response.json();
-    console.log("Raw API Response:", data);  // ✅ Log the entire response
-
-    loader.style.display = 'none';
-
-    if (data.assistant_response) {
-        // Add assistant message
-        addMessageWithTone('assistant', data.assistant_response, data.detected_tone);
-    } else {
-      addMessage('assistant', 'Sorry, something went wrong.');
-    }
-  } catch (error) {
-    // Hide loader
-    loader.style.display = 'none';
-    addMessage('assistant', 'Error connecting to the server.');
-  } finally {
-    // Re-enable chat controls
-    chatInput.disabled = false;
-    sendButton.disabled = false;
-
-    // Focus back on the input for convenience
-    chatInput.focus();
-
-    // Reset mic and send button visibility
-    if (chatInput.value.trim() === '') {
-      sendButton.style.display = 'none';
-      micButton.style.display = 'block';
-    } else {
-      sendButton.style.display = 'block';
-      micButton.style.display = 'none';
-    }
-  }
-});
+//sendButton.addEventListener('click', async () => {
+//  const userMessage = chatInput.value.trim();
+//  if (!userMessage) return;
+//
+//   // Disable chat controls
+//  chatInput.disabled = true;
+//  sendButton.disabled = true;
+//
+//  // Add user message to chat
+//  addMessage('user', userMessage);
+//  chatInput.value = '';
+//
+//  // Reset textarea height to its minimum and recalculate overflow
+//  const lineHeight = parseInt(getComputedStyle(chatInput).lineHeight, 10); // Get line height
+//  chatInput.style.height = `${lineHeight}px`;
+//  chatInput.style.overflowY = "hidden"; // Hide overflow after reset
+//
+//  // Show loader
+//  loader.style.display = 'flex';
+//
+//  // Send message to the server
+//  try {
+//// Send message to the server for Gemini response
+//    const response = await fetch('/api/gemini-response', {
+//      method: 'POST',
+//      headers: {
+//        'Content-Type': 'application/json',
+//      },
+//      body: JSON.stringify({ message: userMessage }),
+//    });
+//
+//    const data = await response.json();
+//    console.log("Raw API Response:", data);  // ✅ Log the entire response
+//
+//    loader.style.display = 'none';
+//
+//    if (data.assistant_response) {
+//        // Add assistant message
+//        addMessage('assistant', data.assistant_response, data.detected_tone);
+//    } else {
+//      addMessage('assistant', 'Sorry, something went wrong.');
+//    }
+//  } catch (error) {
+//    // Hide loader
+//    loader.style.display = 'none';
+//    addMessage('assistant', 'Error connecting to the server.');
+//  } finally {
+//    // Re-enable chat controls
+//    chatInput.disabled = false;
+//    sendButton.disabled = false;
+//
+//    // Focus back on the input for convenience
+//    chatInput.focus();
+//
+//    // Reset mic and send button visibility
+//    if (chatInput.value.trim() === '') {
+//      sendButton.style.display = 'none';
+//      micButton.style.display = 'block';
+//    } else {
+//      sendButton.style.display = 'block';
+//      micButton.style.display = 'none';
+//    }
+//  }
+//});
 
 // Mock Recording State
 let isRecording = false;
@@ -161,8 +161,9 @@ function startRecording() {
       mediaRecorder.start();
       isRecording = true;
 
-      // Show custom recording notification
-      showNotification("Recording...");
+      // Show custom recording notification as toast
+      addMessage('system', 'Recording...', true);
+
 
       micButton.style.background = "#ff4d4d"; // Change mic button to red
     })
@@ -193,8 +194,8 @@ function stopRecording() {
     // Reset mic button appearance
     micButton.style.background = "light-dark(#007bff, #5f6368)";
 
-    // Hide recording notification
-    hideNotification();
+     // Show toast notification when recording stops
+    addMessage('system', 'Recording stopped. Processing...', true);
 
     // Show loader when processing audio
     loader.style.display = 'flex';
@@ -202,11 +203,43 @@ function stopRecording() {
 }
 
 
+//async function sendAudioToServer(audioBlob) {
+//    const formData = new FormData();
+//    formData.append('audio', audioBlob, 'input.wav');
+//    console.log('Sending audio to server...');
+//    console.log('Audio blob:', audioBlob);
+//
+//    try {
+//        const response = await fetch('/api/audio-input', {
+//            method: 'POST',
+//            body: formData
+//        });
+//
+//        const data = await response.json();
+//        console.log('Server response:', data);
+//
+//        // Hide loader when transcription is ready
+//        loader.style.display = 'none';
+//
+//        if (data.user_message && data.assistant_response) {
+//            addMessage('user', data.user_message);
+//            addMessage('assistant', data.assistant_response); // Properly categorize response
+//        } else {
+//            // If audio is unclear, display as a system notification
+//            addMessage('system', 'Audio not clear enough to transcribe.', true);
+//        }
+//    } catch (error) {
+//        console.error('Error sending audio to server:', error);
+//        loader.style.display = 'none';
+//        addMessage('assistant', 'Error processing audio. Please try again.');
+//    }
+//}
+
 async function sendAudioToServer(audioBlob) {
     const formData = new FormData();
     formData.append('audio', audioBlob, 'input.wav');
-    console.log('Sending audio to server...');
-    console.log('Audio blob:', audioBlob);
+
+    loader.style.display = 'block';  // Show loader before fetch
 
     try {
         const response = await fetch('/api/audio-input', {
@@ -217,22 +250,13 @@ async function sendAudioToServer(audioBlob) {
         const data = await response.json();
         console.log('Server response:', data);
 
-        // Hide loader when transcription is ready
-        loader.style.display = 'none';
+        loader.style.display = 'none';  // Hide loader after response
 
         if (data.user_message && data.assistant_response) {
-            // Show transcribed message as user message
             addMessage('user', data.user_message);
-
-            // Show loader while processing response
-            loader.style.display = 'flex';
-
-            setTimeout(() => {
-                loader.style.display = 'none'; // Hide loader after response is ready
-                addMessage('assistant', data.assistant_response); // Display assistant's response
-            }, 1000); // Simulate loader delay for better UI
+            addMessage('assistant', data.assistant_response, data.detected_tone);  // ✅ Updated function usage
         } else {
-            addMessage('assistant', 'Audio unclear. Please try again.');
+            addMessage('system', 'Audio not clear enough to transcribe.', true);
         }
     } catch (error) {
         console.error('Error sending audio to server:', error);
@@ -240,6 +264,9 @@ async function sendAudioToServer(audioBlob) {
         addMessage('assistant', 'Error processing audio. Please try again.');
     }
 }
+
+
+
 
 
 // Play TTS response
@@ -271,51 +298,97 @@ async function playAudioResponse(text) {
 }
 
 
-// Modify message addition for the assistant
-function addMessage(role, content) {
-  const message = document.createElement('div');
-  message.classList.add('Message');
-  message.setAttribute('data-role', role);
+//function addMessage(role, content, isNotification = false) {
+//  const message = document.createElement('div');
+//  message.classList.add('Message');
+//  message.setAttribute('data-role', role);
+//
+//  if (isNotification) {
+//    // Show toast notification instead of adding to chat
+//    showToast(content, true);
+//  } else {
+//    if (role === 'assistant') {
+//      message.innerHTML = content;
+//      chatContainer.appendChild(message);
+//
+//      // Avoid TTS for system notifications
+//      if (!content.includes("microphone") && !content.includes("audio")) {
+//        playAudioResponse(content.replace(/(<([^>]+)>)/gi, '')); // Remove HTML tags for TTS
+//      }
+//    } else {
+//      message.textContent = content;
+//      chatContainer.appendChild(message);
+//    }
+//  }
+//
+//  chatContainer.scrollTop = chatContainer.scrollHeight; // Auto-scroll to latest message
+//}
 
-  if (role === 'assistant') {
-    message.innerHTML = content;
-    chatContainer.appendChild(message);
 
-    // Trigger TTS playback for assistant messages
-    playAudioResponse(content.replace(/(<([^>]+)>)/gi, '')); // Remove HTML tags for TTS
-  } else {
-    message.textContent = content;
-    chatContainer.appendChild(message);
-  }
+//
+//
+//
 
-  chatContainer.scrollTop = chatContainer.scrollHeight; // Auto-scroll to latest message
-}
+//function addMessageWithTone(role, content, detectedTone) {
+//    const message = document.createElement('div');
+//    message.classList.add('Message');
+//    message.setAttribute('data-role', role);
+//
+//    if (role === 'assistant' && ["Happy", "Sad", "Frustrated"].includes(detectedTone)) {
+//        message.innerHTML = `
+//
+//                ${content}
+//                <div class="tone-info">
+//                    <span class="tone-label">Detected Tone: <strong>${detectedTone}</strong></span>
+//                    <button class="correct-tone-btn" onclick="showCorrectionModal('${detectedTone}')">
+//                        Feedback on Tone Analysis
+//                    </button>
+//                </div>
+//
+//        `;
+//    } else {
+//        message.innerHTML = `<div class="assistant-response">${content}</div>`;
+//    }
+//
+//    chatContainer.appendChild(message);
+//    chatContainer.scrollTop = chatContainer.scrollHeight;
+//}
 
-function addMessageWithTone(role, content, detectedTone) {
+function addMessage(role, content, detectedTone = null, isNotification = false) {
     const message = document.createElement('div');
     message.classList.add('Message');
     message.setAttribute('data-role', role);
 
-    if (role === 'assistant' && ["Happy", "Sad", "Frustrated"].includes(detectedTone)) {
-        message.innerHTML = `
-
-                ${content}
-                <div class="tone-info">
-                    <span class="tone-label">Detected Tone: <strong>${detectedTone}</strong></span>
-                    <button class="correct-tone-btn" onclick="showCorrectionModal('${detectedTone}')">
-                        Feedback on Tone Analysis
-                    </button>
-                </div>
-            
-        `;
+    if (isNotification) {
+        // Show toast notification instead of adding to chat
+        showToast(content, true);
     } else {
-        message.innerHTML = `<div class="assistant-response">${content}</div>`;
+        if (role === 'assistant') {
+            if (detectedTone && ["Happy", "Sad", "Frustrated"].includes(detectedTone)) {
+                // Assistant message with detected tone
+                message.innerHTML = `
+                    <div class="assistant-response">
+                        ${content}
+                        <div class="tone-info">
+                            <span class="tone-label">Detected Tone: <strong>${detectedTone}</strong></span>
+                            <button class="correct-tone-btn" onclick="showCorrectionModal('${detectedTone}')">
+                                Feedback on Tone Analysis
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Regular assistant message without tone analysis
+                message.innerHTML = `<div class="assistant-response">${content}</div>`;
+            }
+        } else {
+            message.textContent = content;
+        }
+
+        chatContainer.appendChild(message);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
     }
-
-    chatContainer.appendChild(message);
-    chatContainer.scrollTop = chatContainer.scrollHeight;
 }
-
 
 
 
@@ -351,35 +424,93 @@ async function submitToneCorrection() {
     closeCorrectionModal();
 }
 
+//
+//  // Handle message sending
+//  sendButton.addEventListener('click', async () => {
+//    const userMessage = chatInput.value.trim();
+//    if (!userMessage) return;
+//
+//    // Add user message to chat
+//    addMessage('user', userMessage);
+//    chatInput.value = '';
+//
+//    // Send message to the server
+//    try {
+//      const response = await fetch('/api/send-message', {
+//        method: 'POST',
+//        headers: {
+//          'Content-Type': 'application/json',
+//        },
+//        body: JSON.stringify({ message: userMessage }),
+//      });
+//      const data = await response.json();
+//      if (data.response) {
+//        addMessage('assistant', data.response);
+//      } else {
+//        addMessage('assistant', 'Sorry, something went wrong.');
+//      }
+//    } catch (error) {
+//      addMessage('assistant', 'Error connecting to the server.');
+//    }
+//  });
 
-  // Handle message sending
-  sendButton.addEventListener('click', async () => {
-    const userMessage = chatInput.value.trim();
-    if (!userMessage) return;
+sendButton.addEventListener('click', async () => {
+  const userMessage = chatInput.value.trim();
+  if (!userMessage) return;
 
-    // Add user message to chat
-    addMessage('user', userMessage);
-    chatInput.value = '';
+  // Disable chat controls
+  chatInput.disabled = true;
+  sendButton.disabled = true;
 
-    // Send message to the server
-    try {
-      const response = await fetch('/api/send-message', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message: userMessage }),
-      });
-      const data = await response.json();
-      if (data.response) {
-        addMessage('assistant', data.response);
-      } else {
+  // Add user message to chat
+  addMessage('user', userMessage);
+  chatInput.value = '';
+
+  // Reset textarea height to its minimum and recalculate overflow
+  const lineHeight = parseInt(getComputedStyle(chatInput).lineHeight, 10);
+  chatInput.style.height = `${lineHeight}px`;
+  chatInput.style.overflowY = "hidden"; // Hide overflow after reset
+
+  // Show loader
+  loader.style.display = 'flex';
+
+  try {
+    const response = await fetch('/api/gemini-response', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: userMessage }),
+    });
+
+    const data = await response.json();
+    console.log("Raw API Response:", data);  // ✅ Log the entire response
+
+    loader.style.display = 'none';
+
+    if (data.assistant_response) {
+        // ✅ Use the updated `addMessage` function with detected tone
+        addMessage('assistant', data.assistant_response, data.detected_tone);
+    } else {
         addMessage('assistant', 'Sorry, something went wrong.');
-      }
-    } catch (error) {
-      addMessage('assistant', 'Error connecting to the server.');
     }
-  });
+  } catch (error) {
+    loader.style.display = 'none';
+    addMessage('assistant', 'Error connecting to the server.');
+  } finally {
+    chatInput.disabled = false;
+    sendButton.disabled = false;
+
+    chatInput.focus();
+
+    if (chatInput.value.trim() === '') {
+      sendButton.style.display = 'none';
+      micButton.style.display = 'block';
+    } else {
+      sendButton.style.display = 'block';
+      micButton.style.display = 'none';
+    }
+  }
+});
+
 
 document.getElementById("chat-input").addEventListener("keydown", function (event) {
   // Check if "Enter" is pressed without "Shift"
@@ -502,17 +633,18 @@ document.getElementById("confirm-reset-button").addEventListener("click", async 
 
 // Show toast notifications
 function showToast(message, isError = false) {
-    const toast = document.createElement("div");
-    toast.className = `Toast ${isError ? "Toast--error" : "Toast--success"}`;
-    toast.textContent = message;
+  const toast = document.createElement("div");
+  toast.className = `Toast ${isError ? "Toast--error" : "Toast--success"}`;
+  toast.textContent = message;
 
-    document.body.appendChild(toast);
+  document.body.appendChild(toast);
 
-    setTimeout(() => {
-        toast.classList.add("Toast--hide");
-        setTimeout(() => toast.remove(), 500);
-    }, 3000);
+  setTimeout(() => {
+    toast.classList.add("Toast--hide");
+    setTimeout(() => toast.remove(), 500);
+  }, 3000);
 }
+
 
 
 document.getElementById('registerRecipientForm').addEventListener('submit', async function (e) {
@@ -544,3 +676,4 @@ document.getElementById('registerRecipientForm').addEventListener('submit', asyn
         showToast(result.error, true);
     }
 });
+

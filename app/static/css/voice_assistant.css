@@ -203,26 +203,28 @@ body {
   color: white;
 }
 
-/* Toaster message styling */
 .Toast {
   position: fixed;
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
-  min-width: 250px;
-  padding: 10px 20px;
-  border-radius: 8px;
-  text-align: center;
-  font-size: 16px;
+  background: #4CAF50;
   color: white;
-  background-color: #28a745;
-  z-index: 10000;
-  animation: slide-in 0.5s, fade-out 0.5s 3s forwards;
+  padding: 15px;
+  border-radius: 5px;
+  z-index: 1000;
+  font-size: 16px;
+  transition: opacity 0.5s ease-in-out;
 }
 
 .Toast--error {
-  background-color: #dc3545;
+  background: #FF4C4C;
 }
+
+.Toast--hide {
+  opacity: 0;
+}
+
 
 /* Slide-in animation for toaster */
 @keyframes slide-in {

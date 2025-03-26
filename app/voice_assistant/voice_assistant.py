@@ -14,8 +14,15 @@ import tempfile
 from langdetect import detect
 import re
 from app import mail, db
+
+from app.models import Recipient
+from app.stt_openai import transcribe_with_openai, convert_to_wav
+from .command_router import execute_complex_command, normalize_urdu_command, classify_command, load_simple_commands, \
+    COMMAND_HANDLERS, execute_simple_command
+
 from app.models import Recipient, UserMood
-from .command_router import execute_complex_command
+
+
 
 voice_assistant_bp = Blueprint('voice_assistant', __name__, template_folder='templates')
 
@@ -61,7 +68,7 @@ def determine_tts_settings(text):
             # Detect language using langdetect
             detected_language = detect(text)
 
-        print(detected_language)
+
 
         # Map detected languages to TTS settings
         if detected_language == "ur":
@@ -86,8 +93,7 @@ def text_to_speech():
         tts_settings = determine_tts_settings(text)
         lang = tts_settings["lang"]
         tld = tts_settings["tld"]
-        print(lang)
-        print(tld)
+
 
         # Generate TTS audio
         tts = gTTS(text, lang=lang, tld=tld)
@@ -108,6 +114,141 @@ def text_to_speech():
         return jsonify({"error": "Error generating audio response. Please try again later."}), 500
 
 
+# def process_user_message(user_message):
+#     logging.debug(f"Processing user message: {user_message}")
+#
+#     if 'context' not in session:
+#         session['context'] = {"messages": [], "state": {}}
+#
+
+#     # Normalize command to detect action
+#     normalized_command = normalize_urdu_command(user_message)
+#     logging.debug(f"Normalized command: {normalized_command}")
+#     print(normalized_command)
+#
+#     # Determine if the command is simple or complex
+#     command_type = classify_command(normalized_command)
+#
+#     if command_type == "complex":
+#         # Extract the parameters after the recognized command
+#         command_action = normalized_command  # e.g., "search"
+#         command_params = user_message.replace(normalized_command, "").strip()  # Get remaining part
+#
+#         logging.debug(f"Executing a complex command: {command_action} with parameters: {command_params}")
+#
+#         # Pass command and extracted parameters
+#         command_response = execute_complex_command(command_action, command_params)
+#
+#     elif command_type == "simple":
+#         logging.debug("Executing a simple command.")
+#
+#         # For simple commands, pass the full command text
+#         command_response = execute_simple_command(normalized_command)
+#
+#
+#     else:
+#         logging.debug("Unrecognized command, falling back to Gemini.")
+#         command_response = None
+
+#     session['context']["messages"].append({"role": "user", "content": user_message})
+#
+#     # **Step 1: Check if the user is asking for mood summary**
+#     mood_summary_queries_en = [
+#         "what's my mood summary?", "whats my mood summary?", "tell me my mood history",
+#         "how have I been feeling?", "mood summary"
+#     ]
+
+#
+#     mood_summary_queries_ur = [
+#         "میرا موڈ خلاصہ کیا ہے؟", "میرا موڈ خلاصہ کیا ہے", "مجھے اپنے موڈ کی تاریخ بتائیں",
+#         "میں کیسا محسوس کر رہا ہوں؟", "موڈ کا خلاصہ"
+#     ]
+#
+#     user_language = current_user.language if current_user.is_authenticated else "en"  # Default to English
+#
+#     if user_message.lower() in mood_summary_queries_en or user_message.strip() in mood_summary_queries_ur:
+#         return get_mood_summary().json["message"]
+#
+#     # **Step 2: Try executing a complex command first**
+#     command_response = execute_complex_command(user_message)
+#     if command_response:
+
+#         # Add the response to the session context and return it
+
+
+#         formatted_response = markdown(command_response)
+#         session['context']["messages"].append({"role": "assistant", "content": formatted_response})
+#         session.modified = True
+#         return formatted_response
+#
+
+#     # If no complex command was recognized, fallback to Gemini for response
+#     logging.debug("Falling back to Gemini for response.")
+
+#     # **Step 3: Evaluate Tone**
+#     tone_prompt = f"""
+#     Analyze the emotional tone of the following user message:
+#
+#     "{user_message}"
+#
+#     Respond with one of the following tones: Happy, Sad, Frustrated, Neutral.
+#     """
+#     tone_response = model.generate_content(tone_prompt).text.strip()
+#
+#     # **Step 4: Store detected mood in the database**
+#     if tone_response in ["Happy", "Sad", "Frustrated"] and current_user.is_authenticated:
+#         new_mood = UserMood(user_id=current_user.id, mood=tone_response)
+#         db.session.add(new_mood)
+#         db.session.commit()
+#
+#     # **Step 5: Generate Assistant Response**
+#     conversation_context = [
+#         f"{message['role']}: {message['content']}" for message in session['context']["messages"]
+#     ]
+#     context_string = "\n".join(conversation_context)
+#
+
+#     prompt = (
+#         f"You are a voice assistant. Use short and concise responses, "
+#         f"avoiding unpronounceable punctuation. Use the following conversation context to respond:\n"
+#         f"{context_string}\n\n"
+#         f"User: {user_message}"
+#     )
+#
+#     response = model.generate_content(prompt)
+#
+#     formatted_response = markdown(response.text)
+#     session['context']["messages"].append({"role": "assistant", "content": formatted_response})
+
+#     response_prompt = (
+#         f"You are a voice assistant. Your interface with users will be voice. You should use short and concise responses. "
+#         f"The user’s current emotional tone is: {tone_response}. Respond accordingly with empathy.\n\n"
+#         f"Conversation history:\n{context_string}\n\n"
+#         f"User: {user_message}"
+#     )
+#
+#     response = model.generate_content(response_prompt)
+#     assistant_response = response.text.strip()
+#
+#     # **Step 6: Store response & detected tone in session**
+#
+#     if tone_response in ["Happy", "Sad", "Frustrated"]:
+#         session['context']["messages"].append(
+#                 {"role": "assistant", "content": f"(Detected Tone: {tone_response}) {assistant_response}"})
+#     else:
+#         session['context']["messages"].append({"role": "assistant", "content": assistant_response})
+
+#     session.modified = True
+#
+#     return {  # ✅ Return a dictionary, NOT jsonify()
+#         "user_message": user_message,
+#         "detected_tone": tone_response,
+#         "assistant_response": assistant_response
+#     }
+#
+
+
+
 def process_user_message(user_message):
     logging.debug(f"Processing user message: {user_message}")
 
@@ -116,7 +257,34 @@ def process_user_message(user_message):
 
     session['context']["messages"].append({"role": "user", "content": user_message})
 
-    # **Step 1: Check if the user is asking for mood summary**
+    # **Step 1: Normalize and Classify Command**
+    normalized_command = normalize_urdu_command(user_message)
+    logging.debug(f"Normalized command: {normalized_command}")
+
+    command_type = classify_command(normalized_command)
+
+    # **Step 2: Handle Simple and Complex Commands**
+    if command_type == "complex":
+        command_action = normalized_command  # e.g., "search"
+        command_params = user_message.replace(normalized_command, "").strip()
+
+        logging.debug(f"Executing a complex command: {command_action} with parameters: {command_params}")
+        command_response = execute_complex_command(command_action, command_params)
+
+    elif command_type == "simple":
+        logging.debug("Executing a simple command.")
+        command_response = execute_simple_command(normalized_command)
+
+    else:
+        command_response = None
+
+    if command_response:
+        formatted_response = markdown(command_response)
+        session['context']["messages"].append({"role": "assistant", "content": formatted_response})
+        session.modified = True
+        return formatted_response
+
+    # **Step 3: Check if the user is asking for a mood summary**
     mood_summary_queries_en = [
         "what's my mood summary?", "whats my mood summary?", "tell me my mood history",
         "how have I been feeling?", "mood summary"
@@ -127,20 +295,12 @@ def process_user_message(user_message):
         "میں کیسا محسوس کر رہا ہوں؟", "موڈ کا خلاصہ"
     ]
 
-    user_language = current_user.language if current_user.is_authenticated else "en"  # Default to English
+    user_language = current_user.language if current_user.is_authenticated else "en"
 
     if user_message.lower() in mood_summary_queries_en or user_message.strip() in mood_summary_queries_ur:
         return get_mood_summary().json["message"]
 
-    # **Step 2: Try executing a complex command first**
-    command_response = execute_complex_command(user_message)
-    if command_response:
-        formatted_response = markdown(command_response)
-        session['context']["messages"].append({"role": "assistant", "content": formatted_response})
-        session.modified = True
-        return formatted_response
-
-    # **Step 3: Evaluate Tone**
+    # **Step 4: Evaluate Tone**
     tone_prompt = f"""
     Analyze the emotional tone of the following user message:
 
@@ -150,13 +310,13 @@ def process_user_message(user_message):
     """
     tone_response = model.generate_content(tone_prompt).text.strip()
 
-    # **Step 4: Store detected mood in the database**
+    # **Step 5: Store detected mood in the database**
     if tone_response in ["Happy", "Sad", "Frustrated"] and current_user.is_authenticated:
         new_mood = UserMood(user_id=current_user.id, mood=tone_response)
         db.session.add(new_mood)
         db.session.commit()
 
-    # **Step 5: Generate Assistant Response**
+    # **Step 6: Generate Assistant Response**
     conversation_context = [
         f"{message['role']}: {message['content']}" for message in session['context']["messages"]
     ]
@@ -164,7 +324,7 @@ def process_user_message(user_message):
 
     response_prompt = (
         f"You are a voice assistant. Your interface with users will be voice. You should use short and concise responses. "
-        f"The user’s current emotional tone is: {tone_response}. Respond accordingly with empathy, 1 to 2 line sentence and an emoji(if tone is detected).\n\n"
+        f"The user’s current emotional tone is: {tone_response}. Respond accordingly with empathy.\n\n"
         f"Conversation history:\n{context_string}\n\n"
         f"User: {user_message}"
     )
@@ -172,20 +332,59 @@ def process_user_message(user_message):
     response = model.generate_content(response_prompt)
     assistant_response = response.text.strip()
 
-    # **Step 6: Store response & detected tone in session**
-
+    # **Step 7: Store response & detected tone in session**
     if tone_response in ["Happy", "Sad", "Frustrated"]:
         session['context']["messages"].append(
-                {"role": "assistant", "content": f"(Detected Tone: {tone_response}) {assistant_response}"})
+            {"role": "assistant", "content": f"(Detected Tone: {tone_response}) {assistant_response}"})
     else:
         session['context']["messages"].append({"role": "assistant", "content": assistant_response})
+
     session.modified = True
 
-    return {  # ✅ Return a dictionary, NOT jsonify()
+    return {
         "user_message": user_message,
         "detected_tone": tone_response,
         "assistant_response": assistant_response
     }
+
+# @voice_assistant_bp.route('/api/audio-input', methods=['POST'])
+# def process_audio():
+#     if 'audio' not in request.files:
+#         return jsonify({"error": "No audio file provided"}), 400
+#
+#     audio_file = request.files['audio']
+#
+#     if audio_file:
+#         try:
+#             # Save the uploaded audio file
+#             filename = secure_filename(audio_file.filename)
+#             file_path = os.path.join(UPLOAD_FOLDER, filename)
+#             audio_file.save(file_path)
+#
+#             # Convert to WAV format for compatibility
+#             wav_path = convert_to_wav(file_path)
+#
+#             # Transcribe audio using SpeechRecognition
+#             accent = "en-UR"  # Default to Urdu accent, modify as needed
+#             transcription = transcribe_with_speech_recognition(wav_path, accent)
+#
+#             # Logging transcription for debugging
+#             logging.debug(f"Transcription output: {transcription}")
+#
+#             # Process the transcription with the shared function
+#             assistant_response = process_user_message(transcription)
+#
+#             # Return both user and assistant messages
+#             return jsonify({
+#                 "user_message": transcription,
+#                 "assistant_response": assistant_response
+#             })
+#
+#         except Exception as e:
+#             logging.error(f"Error processing audio: {str(e)}")
+#             return jsonify({"error": str(e)}), 500
+#
+#     return jsonify({"error": "Invalid audio input"}), 400
 
 
 # def process_user_message(user_message):
@@ -267,44 +466,31 @@ def process_user_message(user_message):
 #
 #     return assistant_response
 
+
 @voice_assistant_bp.route('/api/audio-input', methods=['POST'])
 def process_audio():
     if 'audio' not in request.files:
         return jsonify({"error": "No audio file provided"}), 400
 
     audio_file = request.files['audio']
+    filename = secure_filename(audio_file.filename)
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+    audio_file.save(file_path)
 
-    if audio_file:
-        try:
-            # Save the uploaded audio file
-            filename = secure_filename(audio_file.filename)
-            file_path = os.path.join(UPLOAD_FOLDER, filename)
-            audio_file.save(file_path)
+    # Convert to WAV format for compatibility
+    wav_path = convert_to_wav(file_path)
 
-            # Convert to WAV format for compatibility
-            wav_path = convert_to_wav(file_path)
+    # Use OpenAI for transcription
+    transcription = transcribe_with_openai(wav_path)
 
-            # Transcribe audio using SpeechRecognition
-            accent = "en-UR"  # Default to Urdu accent, modify as needed
-            transcription = transcribe_with_speech_recognition(wav_path, accent)
+    logging.debug(f"Transcription output: {transcription}")
 
-            # Logging transcription for debugging
-            logging.debug(f"Transcription output: {transcription}")
+    assistant_response = process_user_message(transcription)
 
-            # Process the transcription with the shared function
-            assistant_response = process_user_message(transcription)
-
-            # Return both user and assistant messages
-            return jsonify({
-                "user_message": transcription,
-                "assistant_response": assistant_response
-            })
-
-        except Exception as e:
-            logging.error(f"Error processing audio: {str(e)}")
-            return jsonify({"error": str(e)}), 500
-
-    return jsonify({"error": "Invalid audio input"}), 400
+    return jsonify({
+        "user_message": transcription,
+        "assistant_response": assistant_response
+    })
 
 
 # Function to generate response from Gemini

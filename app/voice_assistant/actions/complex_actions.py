@@ -10,45 +10,180 @@ from datetime import datetime
 
 from urllib.parse import quote
 import requests
+NAME_MAPPING = {
+    "سامی": "sami",
+    "علی": "ali",
+    "احمد": "ahmed",
+    "فرحان": "farhan",
+    "طلحہ": "talha",
+    "حمزہ": "hamza",
+    "حسن": "hassan",
+    "حسین": "hussain",
+    "فیصل": "faisal",
+    "زید": "zaid",
+    "ریحان": "rehan",
+    "کاشف": "kashif",
+    "عرفان": "irfan",
+    "عمران": "imran",
+    "نعمان": "numan",
+    "شعیب": "shoaib",
+    "راشد": "rashid",
+    "کامران": "kamran",
+    "عامر": "aamir",
+    "ارسلان": "arslan",
+    "حمید": "hameed",
+    "شبیر": "shabbir",
+    "یوسف": "yousuf",
+    "وقار": "waqar",
+    "منصور": "mansoor",
+    "مہتاب": "mehtab",
+    "ابرار": "abrar",
+    "سلمان": "salman",
+    "ذیشان": "zeeshan",
+    "مظفر": "muzaffar",
+    "مدثر": "mudassir",
+    "ناصر": "nasir",
+    "جاوید": "javed",
+    "تنویر": "tanveer",
+    "شمریز": "shamrez",
+    "رضوان": "rizwan",
+    "رفیق": "rafiq",
+    "آصف": "asif",
+    "بابر": "babar",
+    "عارف": "arif",
+    "شفیق": "shafiq",
+    "سجاد": "sajjad",
+    "ادریس": "idrees",
+    "فہد": "fahad",
+    "صدیق": "siddiq",
+    "محبوب": "mehboob",
+    "انیس": "anees",
+    "عبید": "obaid",
+    "رافع": "rafeh",
+    "شاہد": "shahid",
+    "عابد": "abid",
+    "شہزاد": "shehzad",
+    "نواز": "nawaz",
+    "عاصم": "asim",
+    "طاہر": "tahir",
+    "نوید": "naveed",
+    "سہیل": "sohail",
+    "بشیر": "basheer",
+    "خالد": "khalid",
+    "طارق": "tariq",
+    "فاروق": "farooq",
+    "مشتاق": "mushtaq",
+    "یونس": "younis",
+    "لطیف": "lateef",
+    "ہمایوں": "humayun",
+    "ضیاء": "zia",
+    "ابرہیم": "ibrahim",
+    "شاکر": "shakir",
+    "ندیم": "nadeem",
+    "عزیز": "aziz",
+    "سلیم": "saleem",
+    "قیصر": "qaiser",
+    "شفقت": "shafqat",
+    "زبیر": "zubair",
+    "ندیم کھوکھر": "nadeem khokhar",
+    "غفار": "ghaffar",
+    "سمرا": "samra",
+    "سائرہ": "saira",
+    "اویس": "awais",
+    "ایاز": "ayyaz",
+}
 
-# Specific command handlers
+
+def transliterate_urdu_to_english(text):
+    """Simple mapping-based transliteration from Urdu to English."""
+    return NAME_MAPPING.get(text.strip(), text.strip().lower())  # Default to lower-case if no match
+
+from langdetect import detect
+
+def detect_language(text):
+    """Detect language of the input text with better error handling and manual fallback."""
+    try:
+        # Detect language using langdetect
+        lang = detect(text)
+        logging.info(f"Detected language: {lang}")
+        if lang in ["en", "ur"]:
+            return lang
+    except Exception as e:
+        logging.error(f"Language detection failed: {e}")
+
+    # Manual check for Urdu characters if langdetect fails
+    if re.search(r'[\u0600-\u06FF]', text):
+        logging.info("Fallback: Detected Urdu based on character presence")
+        return "ur"
+
+    return "en"
+
+
+
+def get_response_in_language(lang, urdu_msg, english_msg):
+    """Return appropriate response based on detected language."""
+    logging.info(f"Returning response in language: {lang}")
+    return urdu_msg if lang == 'ur' else english_msg
+
+
 def handle_send_email(command):
-    match = re.search(r"send email to (.+?) with subject (.+?) and body (.+)", command, re.IGNORECASE)
-    if match:
-        name, subject, body = match.groups()
+    logging.info(f"Received command: {command}")
+    lang = detect_language(command)
 
-        # Clean up input (trim whitespaces and handle case)
-        name = name.strip().lower()  # Normalize the name
-        logging.info(f"Received command to send email to '{name}' with subject '{subject}' and body '{body}'")
+    match = re.search(
+        r"(?:to|ای میل\s+بھیجیں)\s+(.+?)\s+(?:with subject|کو\s+جس\s+کا\s+عنوان)\s+(.+?)\s+(?:and body|اور\s+پیغام)\s+(.+)",
+        command,
+        re.IGNORECASE
+    )
+
+    if match:
+        name_urdu, subject, body = match.groups()
+        name = transliterate_urdu_to_english(name_urdu.strip())
+
+        logging.info(f"Processed recipient name: {name}")
 
         try:
-            # Lookup recipient in the database
             recipient = Recipient.query.filter_by(name=name).first()
-            print(recipient)# Case-insensitive query
             if not recipient:
-                # If recipient not found, return registration message and do not proceed with email sending
-                #register_url = url_for('voice_assistant.register_recipient', _external=True)
                 logging.error(f"Recipient '{name}' not found in the database.")
-                return (f"No email found for {name}. Please register the recipient first. "
-                        f"<a href='#' data-toggle='modal' data-target='#addRecipientModal'>Click here to register</a>")
+                return get_response_in_language(
+                    lang,
+                    f"کوئی ای میل {name} کے لئے نہیں ملی۔ براہ کرم پہلے وصول کنندہ کو رجسٹر کریں۔ "
+                    f"<a href='#' data-toggle='modal' data-target='#addRecipientModal'>یہاں رجسٹر کریں</a>",
+                    f"No email found for {name}. Please register the recipient first. "
+                    f"<a href='#' data-toggle='modal' data-target='#addRecipientModal'>Click here to register</a>"
+                )
 
-            # If recipient found, send the email
             logging.info(f"Sending email to {recipient.name} at {recipient.email} with subject: {subject}")
-            send_email(recipient.email, subject, body)  # Only called if recipient exists
-            return f"Email sent to {recipient.name} ({recipient.email}) with subject: {subject}."
+            send_email(recipient.email, subject, body)
+            return get_response_in_language(
+                lang,
+                f"{recipient.name} ({recipient.email}) کو ای میل بھیج دی گئی۔",
+                f"Email sent to {recipient.name} ({recipient.email}) with subject: {subject}."
+            )
 
         except ValueError as ve:
-            # Specific error for invalid email format or sending error
             logging.error(f"ValueError: {ve}")
-            return f"Failed to send email. Error: {ve}"
+            return get_response_in_language(
+                lang,
+                f"ای میل بھیجنے میں ناکامی۔ خرابی: {ve}",
+                f"Failed to send email. Error: {ve}"
+            )
 
         except Exception as e:
-            # Catch all other exceptions
             logging.error(f"Error sending email: {e}")
-            return "Failed to send email. Please check the email details and try again."
+            return get_response_in_language(
+                lang,
+                "ای میل بھیجنے میں ناکامی۔ براہ کرم تفصیلات چیک کریں اور دوبارہ کوشش کریں۔",
+                "Failed to send email. Please check the email details and try again."
+            )
 
-    # Command did not match the expected format
-    return "Please provide email details in the format: 'send email to [name] with subject [subject] and body [body]'."
+    # Format error message with correct language response
+    return get_response_in_language(
+        lang,
+        "براہ کرم ای میل کی تفصیلات اس فارمیٹ میں درج کریں: ' ای میل بھیجیں [نام] کو جس کا عنوان [عنوان] اور پیغام [پیغام]'",
+        "Please provide email details in the format: 'send email to [name] with subject [subject] and body [body]'."
+    )
 
 
 def handle_set_reminder(command):
@@ -80,34 +215,61 @@ def set_reminder(reminder, time):
     except ValueError:
         raise ValueError("Invalid time format. Use 'YYYY-MM-DD HH:MM:SS'.")
 
-def handle_search_query(command):
-    match = re.search(r"search (.+)", command, re.IGNORECASE)
-    if match:
-        search_term = match.group(1).strip()
-        query_url = f"https://www.google.com/search?q={search_term}"
+
+def handle_search_query(query):
+    lang = detect_language(query)
+    if query.strip():
+        query_url = f"https://www.google.com/search?q={quote(query.strip())}"
         webbrowser.open(query_url)
-        return f"Searching Google for '{search_term}'."
-    return "Please provide a search term in the format: 'search [term]'."
+        logging.debug(f"[DEBUG] Searching Google for: {query.strip()}")
+        return get_response_in_language(
+            lang,
+            f"گوگل پر '{query.strip()}' کے لئے تلاش کی جا رہی ہے۔",
+            f"Searching Google for '{query.strip()}'."
+        )
+
+    return get_response_in_language(
+        lang,
+        "براہ کرم تلاش کی اصطلاح فراہم کریں۔",
+        "Please provide a search term."
+    )
 
 
-def handle_play_query(command):
-    match = re.search(r"play (.+)", command, re.IGNORECASE)
-    if match:
-        query = match.group(1).strip()
+def handle_play_query(query):
+    lang = detect_language(query)
+
+    if query.strip():
         try:
-            # Fetch the first YouTube video result
-            search_url = f"https://www.youtube.com/results?search_query={quote(query)}"
+            search_url = f"https://www.youtube.com/results?search_query={quote(query.strip())}"
             response = requests.get(search_url).text
 
-            # Extract video ID using regex
             video_id_match = re.search(r"\"videoId\":\"([^\"]+)\"", response)
             if video_id_match:
                 video_id = video_id_match.group(1)
                 youtube_url = f"https://www.youtube.com/watch?v={video_id}"
                 webbrowser.open(youtube_url)
-                return f"Playing '{query}' on YouTube."
-            else:
-                return "No results found on YouTube."
+                return get_response_in_language(
+                    lang,
+                    f"یوٹیوب پر '{query.strip()}' چلایا جا رہا ہے۔",
+                    f"Playing '{query.strip()}' on YouTube."
+                )
+
+            return get_response_in_language(
+                lang,
+                "یوٹیوب پر کچھ نہیں ملا۔",
+                "No results found on YouTube."
+            )
         except Exception as e:
-            return f"Failed to play music. Error: {str(e)}"
-    return "Please provide a query in the format: 'play [query]'."
+            return get_response_in_language(
+                lang,
+                f"یوٹیوب پر تلاش ناکام رہی۔ غلطی: {str(e)}",
+                f"Failed to search on YouTube. Error: {str(e)}"
+            )
+
+    return get_response_in_language(
+        lang,
+        "براہ کرم گانے کا نام فراہم کریں۔",
+        "Please provide the song name."
+    )
+
+
