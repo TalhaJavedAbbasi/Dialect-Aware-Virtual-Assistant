@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
             action_type: document.getElementById("action_type").value
         };
 
-        let url = commandId ? `/voice-commands/update/${commandId}` : "/voice-commands/create";
+        let url = commandId ? `/voice_commands/update/${commandId}` : "/voice_commands/create";
         let method = commandId ? "PUT" : "POST";
 
         fetch(url, {
@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Fetch and display commands
 function loadCommands() {
-    fetch("/voice-commands/get-commands")
+    fetch("/voice_commands/get-commands")
     .then(response => response.json())
     .then(data => {
         let commandList = document.getElementById("commandList");
@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
             command_ids: Array.from(document.getElementById("shortcut_commands").selectedOptions).map(option => option.value)
         };
 
-        fetch("/voice-commands/create-shortcut", {
+        fetch("/voice_commands/create-shortcut", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(shortcutData)
@@ -89,7 +89,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Fetch and display shortcuts
 function loadShortcuts() {
-    fetch("/voice-commands/get-shortcuts")
+    fetch("/voice_commands/get-shortcuts")
     .then(response => response.json())
     .then(data => {
         let shortcutList = document.getElementById("shortcutList");
@@ -107,7 +107,7 @@ function loadShortcuts() {
         });
 
         // Load available commands in shortcut creation dropdown
-        fetch("/voice-commands/get-commands")
+        fetch("/voice_commands/get-commands")
         .then(response => response.json())
         .then(commands => {
             let shortcutCommands = document.getElementById("shortcut_commands");
@@ -124,7 +124,7 @@ function loadShortcuts() {
 
 // Delete shortcut
 function deleteShortcut(shortcutId) {
-    fetch(`/voice-commands/delete-shortcut/${shortcutId}`, {
+    fetch(`/voice_commands/delete-shortcut/${shortcutId}`, {
         method: "DELETE"
     })
     .then(response => response.json())
@@ -149,7 +149,7 @@ function editCommand(id, name, trigger, action) {
 
 // Delete command
 function deleteCommand(id) {
-    fetch(`/voice-commands/delete/${id}`, { method: "DELETE" })
+    fetch(`/voice_commands/delete/${id}`, { method: "DELETE" })
     .then(response => response.json())
     .then(data => {
         alert(data.message);
@@ -160,7 +160,7 @@ function deleteCommand(id) {
 
 function updateSchedule(cmd_id) {
     let schedule = document.getElementById(`schedule-${cmd_id}`).value;
-    fetch(`/voice-commands/update-schedule/${cmd_id}`, {
+    fetch(`/voice_commands/update-schedule/${cmd_id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ activation_schedule: schedule })
@@ -168,7 +168,7 @@ function updateSchedule(cmd_id) {
 }
 
 function toggleStatus(cmd_id) {
-    fetch(`/voice-commands/toggle-status/${cmd_id}`, {
+    fetch(`/voice_commands/toggle-status/${cmd_id}`, {
         method: "PATCH"
     }).then(response => response.json()).then(data => {
         alert(data.message);

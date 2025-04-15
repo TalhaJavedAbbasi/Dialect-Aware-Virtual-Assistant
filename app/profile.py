@@ -16,6 +16,7 @@ def profile():
         user.name = form.name.data
         user.email = form.email.data
         user.language = form.language.data
+        current_user.region = form.city.data  # Update region
         user.theme = form.theme.data
         db.session.commit()
         flash('Profile updated successfully!', 'success')
@@ -24,6 +25,7 @@ def profile():
     form.name.data = current_user.name  #
     form.email.data = current_user.email
     form.language.data = current_user.language
+    form.city.data = current_user.region
     form.theme.data = current_user.theme
     return render_template('profile.html', form=form)
 

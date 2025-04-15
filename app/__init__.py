@@ -72,6 +72,8 @@ def create_app():
     from app.stt_openai import stt_openai_bp
 
     from .tone_dashboard import tone_dashboard_bp
+    from app.voice_commands import voice_commands_bp
+
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(oauth_bp)
@@ -86,6 +88,7 @@ def create_app():
     app.register_blueprint(stt_openai_bp, url_prefix='/stt_openai')
 
     app.register_blueprint(tone_dashboard_bp)
+    app.register_blueprint(voice_commands_bp, url_prefix='/voice_commands')
 
     return app
 

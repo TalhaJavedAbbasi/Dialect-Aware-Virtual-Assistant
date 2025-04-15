@@ -116,6 +116,35 @@ class ProfileForm(FlaskForm):
             validate_email_format
         ]
     )
-    language = SelectField('Preferred Language', choices=[('en', 'English'), ('ur', 'Urdu'), ('pn', 'Punjabi')], validators=[DataRequired()])
+    language = SelectField('Preferred Language', choices=[('en', 'English'), ('ur', 'Urdu')], validators=[DataRequired()])
+    city = SelectField(
+        'City',
+        choices=[
+            ('lahore', 'Lahore'),
+            ('karachi', 'Karachi'),
+            ('islamabad', 'Islamabad'),
+            ('rawalpindi', 'Rawalpindi'),
+            ('faisalabad', 'Faisalabad'),
+            ('peshawar', 'Peshawar'),
+            ('multan', 'Multan'),
+            ('dera ismail khan', 'Dera Ismail Khan'),
+            ('mardan', 'Mardan'),
+            ('quetta', 'Quetta'),
+            ('gujranwala', 'Gujranwala'),
+            ('sialkot', 'Sialkot'),
+            ('new york', 'New York'),
+            ('los angeles', 'Los Angeles'),
+            ('chicago', 'Chicago'),
+            ('houston', 'Houston'),
+            ('miami', 'Miami'),
+            ('san francisco', 'San Francisco'),
+            ('seattle', 'Seattle'),
+            ('atlanta', 'Atlanta'),
+            ('washington dc', 'Washington DC'),
+            ('boston', 'Boston')
+        ],
+        validators=[DataRequired()]
+    )
+
     theme = SelectField('Theme', choices=[('light', 'Light'), ('dark', 'Dark')], validators=[DataRequired()])
     submit = SubmitField('Save Changes')

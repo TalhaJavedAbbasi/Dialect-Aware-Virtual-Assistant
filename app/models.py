@@ -32,6 +32,7 @@ class User(UserMixin,db.Model):
     role: Mapped[str] = mapped_column(String(20), nullable=False, default='user')
     language: Mapped[str] = mapped_column(String(5), default='en')  # Default to English
     theme: Mapped[str] = mapped_column(String(10), default='light')
+    region: Mapped[str] = mapped_column(String(100), default="Punjab")  # Default region
     posts = relationship("BlogPost", back_populates="author")
     comments = relationship("Comment", back_populates="comment_author")
     recipients = relationship("Recipient", back_populates="user", cascade="all, delete-orphan")

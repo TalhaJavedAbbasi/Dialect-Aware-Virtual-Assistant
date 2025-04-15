@@ -62,71 +62,6 @@ sendButton.style.display = 'none'; // Initially hidden
 micButton.style.display = 'block'; // Initially shown
 
 
-//sendButton.addEventListener('click', async () => {
-//  const userMessage = chatInput.value.trim();
-//  if (!userMessage) return;
-//
-//   // Disable chat controls
-//  chatInput.disabled = true;
-//  sendButton.disabled = true;
-//
-//  // Add user message to chat
-//  addMessage('user', userMessage);
-//  chatInput.value = '';
-//
-//  // Reset textarea height to its minimum and recalculate overflow
-//  const lineHeight = parseInt(getComputedStyle(chatInput).lineHeight, 10); // Get line height
-//  chatInput.style.height = `${lineHeight}px`;
-//  chatInput.style.overflowY = "hidden"; // Hide overflow after reset
-//
-//  // Show loader
-//  loader.style.display = 'flex';
-//
-//  // Send message to the server
-//  try {
-//// Send message to the server for Gemini response
-//    const response = await fetch('/api/gemini-response', {
-//      method: 'POST',
-//      headers: {
-//        'Content-Type': 'application/json',
-//      },
-//      body: JSON.stringify({ message: userMessage }),
-//    });
-//
-//    const data = await response.json();
-//    console.log("Raw API Response:", data);  // ✅ Log the entire response
-//
-//    loader.style.display = 'none';
-//
-//    if (data.assistant_response) {
-//        // Add assistant message
-//        addMessage('assistant', data.assistant_response, data.detected_tone);
-//    } else {
-//      addMessage('assistant', 'Sorry, something went wrong.');
-//    }
-//  } catch (error) {
-//    // Hide loader
-//    loader.style.display = 'none';
-//    addMessage('assistant', 'Error connecting to the server.');
-//  } finally {
-//    // Re-enable chat controls
-//    chatInput.disabled = false;
-//    sendButton.disabled = false;
-//
-//    // Focus back on the input for convenience
-//    chatInput.focus();
-//
-//    // Reset mic and send button visibility
-//    if (chatInput.value.trim() === '') {
-//      sendButton.style.display = 'none';
-//      micButton.style.display = 'block';
-//    } else {
-//      sendButton.style.display = 'block';
-//      micButton.style.display = 'none';
-//    }
-//  }
-//});
-
 // Mock Recording State
 let isRecording = false;
 
@@ -203,37 +138,7 @@ function stopRecording() {
 }
 
 
-//async function sendAudioToServer(audioBlob) {
-//    const formData = new FormData();
-//    formData.append('audio', audioBlob, 'input.wav');
-//    console.log('Sending audio to server...');
-//    console.log('Audio blob:', audioBlob);
-//
-//    try {
-//        const response = await fetch('/api/audio-input', {
-//            method: 'POST',
-//            body: formData
-//        });
-//
-//        const data = await response.json();
-//        console.log('Server response:', data);
-//
-//        // Hide loader when transcription is ready
-//        loader.style.display = 'none';
-//
-//        if (data.user_message && data.assistant_response) {
-//            addMessage('user', data.user_message);
-//            addMessage('assistant', data.assistant_response); // Properly categorize response
-//        } else {
-//            // If audio is unclear, display as a system notification
-//            addMessage('system', 'Audio not clear enough to transcribe.', true);
-//        }
-//    } catch (error) {
-//        console.error('Error sending audio to server:', error);
-//        loader.style.display = 'none';
-//        addMessage('assistant', 'Error processing audio. Please try again.');
-//    }
-//}
+
 
 async function sendAudioToServer(audioBlob) {
     const formData = new FormData();
@@ -298,61 +203,6 @@ async function playAudioResponse(text) {
 }
 
 
-//function addMessage(role, content, isNotification = false) {
-//  const message = document.createElement('div');
-//  message.classList.add('Message');
-//  message.setAttribute('data-role', role);
-//
-//  if (isNotification) {
-//    // Show toast notification instead of adding to chat
-//    showToast(content, true);
-//  } else {
-//    if (role === 'assistant') {
-//      message.innerHTML = content;
-//      chatContainer.appendChild(message);
-//
-//      // Avoid TTS for system notifications
-//      if (!content.includes("microphone") && !content.includes("audio")) {
-//        playAudioResponse(content.replace(/(<([^>]+)>)/gi, '')); // Remove HTML tags for TTS
-//      }
-//    } else {
-//      message.textContent = content;
-//      chatContainer.appendChild(message);
-//    }
-//  }
-//
-//  chatContainer.scrollTop = chatContainer.scrollHeight; // Auto-scroll to latest message
-//}
-
-
-//
-//
-//
-
-//function addMessageWithTone(role, content, detectedTone) {
-//    const message = document.createElement('div');
-//    message.classList.add('Message');
-//    message.setAttribute('data-role', role);
-//
-//    if (role === 'assistant' && ["Happy", "Sad", "Frustrated"].includes(detectedTone)) {
-//        message.innerHTML = `
-//
-//                ${content}
-//                <div class="tone-info">
-//                    <span class="tone-label">Detected Tone: <strong>${detectedTone}</strong></span>
-//                    <button class="correct-tone-btn" onclick="showCorrectionModal('${detectedTone}')">
-//                        Feedback on Tone Analysis
-//                    </button>
-//                </div>
-//
-//        `;
-//    } else {
-//        message.innerHTML = `<div class="assistant-response">${content}</div>`;
-//    }
-//
-//    chatContainer.appendChild(message);
-//    chatContainer.scrollTop = chatContainer.scrollHeight;
-//}
 
 function addMessage(role, content, detectedTone = null, isNotification = false) {
     const message = document.createElement('div');
@@ -367,7 +217,7 @@ function addMessage(role, content, detectedTone = null, isNotification = false) 
             if (detectedTone && ["Happy", "Sad", "Frustrated"].includes(detectedTone)) {
                 // Assistant message with detected tone
                 message.innerHTML = `
-                    <div class="assistant-response">
+
                         ${content}
                         <div class="tone-info">
                             <span class="tone-label">Detected Tone: <strong>${detectedTone}</strong></span>
@@ -375,7 +225,7 @@ function addMessage(role, content, detectedTone = null, isNotification = false) 
                                 Feedback on Tone Analysis
                             </button>
                         </div>
-                    </div>
+
                 `;
             } else {
                 // Regular assistant message without tone analysis
@@ -424,35 +274,6 @@ async function submitToneCorrection() {
     closeCorrectionModal();
 }
 
-//
-//  // Handle message sending
-//  sendButton.addEventListener('click', async () => {
-//    const userMessage = chatInput.value.trim();
-//    if (!userMessage) return;
-//
-//    // Add user message to chat
-//    addMessage('user', userMessage);
-//    chatInput.value = '';
-//
-//    // Send message to the server
-//    try {
-//      const response = await fetch('/api/send-message', {
-//        method: 'POST',
-//        headers: {
-//          'Content-Type': 'application/json',
-//        },
-//        body: JSON.stringify({ message: userMessage }),
-//      });
-//      const data = await response.json();
-//      if (data.response) {
-//        addMessage('assistant', data.response);
-//      } else {
-//        addMessage('assistant', 'Sorry, something went wrong.');
-//      }
-//    } catch (error) {
-//      addMessage('assistant', 'Error connecting to the server.');
-//    }
-//  });
 
 sendButton.addEventListener('click', async () => {
   const userMessage = chatInput.value.trim();
@@ -485,6 +306,7 @@ sendButton.addEventListener('click', async () => {
     console.log("Raw API Response:", data);  // ✅ Log the entire response
 
     loader.style.display = 'none';
+
 
     if (data.assistant_response) {
         // ✅ Use the updated `addMessage` function with detected tone
@@ -539,9 +361,6 @@ document.getElementById("close-mood-modal").addEventListener("click", function()
 document.getElementById("tone-overview-button").addEventListener("click", function() {
         window.location.href = "/tone-overview";
     });
-
-
-
 
 
 // Trigger modal on Reset Context button click
@@ -644,7 +463,6 @@ function showToast(message, isError = false) {
     setTimeout(() => toast.remove(), 500);
   }, 3000);
 }
-
 
 
 document.getElementById('registerRecipientForm').addEventListener('submit', async function (e) {
