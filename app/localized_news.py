@@ -2,7 +2,7 @@ import os
 import requests
 from bs4 import BeautifulSoup
 from flask_login import current_user
-from gnews import GNews
+#from gnews import GNews
 import feedparser
 
 # API Key (Use an environment variable for security)

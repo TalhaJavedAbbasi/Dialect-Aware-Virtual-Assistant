@@ -10,7 +10,7 @@ from werkzeug.utils import secure_filename
 api_key = os.getenv("OPENAI_API_KEY")
 
 if not api_key:
-    print("API key is not set. Please configure it.")
+    print("OpenAIAPI key is not set. Please configure it.")
 else:
     try:
         openai.api_key = api_key
@@ -38,17 +38,23 @@ def convert_to_wav(audio_path):
     audio.export(wav_path, format="wav")
     return wav_path
 
-def transcribe_with_openai(audio_path):
+def transcribe_with_openai(audio_path, language='en'):
     duration, estimated_cost = get_audio_duration_and_cost(audio_path)
     print(f"Audio Duration: {duration:.2f} seconds")
     print(f"Estimated Cost: ${estimated_cost:.4f}")
+
     try:
         logging.info(f"Transcribing audio file: {audio_path}")
         with open(audio_path, "rb") as audio_file:
-            response = openai.Audio.transcribe("whisper-1", audio_file)
+            response = openai.Audio.transcribe(
+                model="whisper-1",
+                file=audio_file,
+                language=language  # 👈 language passed here
+            )
         return response.get("text", "Transcription failed.")
     except Exception as e:
         return f"Error: {str(e)}"
+
 
 @stt_openai_bp.route('/transcribe_audio_openai', methods=['POST'])
 def transcribe_audio_openai():

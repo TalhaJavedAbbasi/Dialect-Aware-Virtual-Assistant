@@ -1,8 +1,9 @@
 from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship, DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import Integer, String, Text, ForeignKey, DateTime, func
+from sqlalchemy import Integer, String, Text, ForeignKey, DateTime, func, UniqueConstraint
 from app import db
+from datetime import datetime
 
 
 # BlogPost Model
@@ -55,11 +56,15 @@ class CustomCommand(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, nullable=False)
     command_name = db.Column(db.String(100), nullable=False)
-    trigger_phrase = db.Column(db.String(255), nullable=False, unique=True)
+    trigger_phrase = db.Column(db.String(255), nullable=False)
     action_type = db.Column(db.String(50), nullable=False)
     parameters = db.Column(db.JSON, nullable=True)
     status = db.Column(db.Boolean, default=True)
     activation_schedule = db.Column(db.String(255), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint('user_id', 'trigger_phrase', name='uix_user_trigger_phrase'),
+    )
 
     def __repr__(self):
         return f"<CustomCommand {self.command_name}>"
@@ -101,3 +106,17 @@ class Comment(db.Model):
     comment_author = relationship("User", back_populates="comments")
     post_id: Mapped[str] = mapped_column(Integer, db.ForeignKey("blog_posts.id"))
     parent_post = relationship("BlogPost", back_populates="comments")
+
+
+class Notification(db.Model):
+    __tablename__ = "notifications"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    message: Mapped[str] = mapped_column(String(255), nullable=False)
+    remind_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    priority: Mapped[str] = mapped_column(String(20), default='normal')  # 'normal', 'high', 'low'
+    is_seen: Mapped[bool] = mapped_column(db.Boolean, default=False)
+    is_muted: Mapped[bool] = mapped_column(db.Boolean, default=False)
+    timestamp: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+
+    user = relationship("User", backref="notifications")

@@ -138,13 +138,11 @@ function stopRecording() {
 }
 
 
-
-
 async function sendAudioToServer(audioBlob) {
     const formData = new FormData();
     formData.append('audio', audioBlob, 'input.wav');
 
-    loader.style.display = 'block';  // Show loader before fetch
+    loader.style.display = 'block';  // Show loader
 
     try {
         const response = await fetch('/api/audio-input', {
@@ -152,27 +150,27 @@ async function sendAudioToServer(audioBlob) {
             body: formData
         });
 
-        const data = await response.json();
-        console.log('Server response:', data);
+        const result = await response.json();
+        console.log('Server response:', result);
 
-        loader.style.display = 'none';  // Hide loader after response
+        loader.style.display = 'none';
 
-        if (data.user_message && data.assistant_response) {
-            addMessage('user', data.user_message);
-            addMessage('assistant', data.assistant_response, data.detected_tone);  // ✅ Updated function usage
+        if (result && result.assistant_response && result.assistant_response.assistant_response) {
+            const assistantData = result.assistant_response;
+
+            addMessage('user', result.user_message);
+            addMessage('assistant', assistantData.assistant_response, assistantData.detected_tone);
         } else {
-            addMessage('system', 'Audio not clear enough to transcribe.', true);
+            addMessage('system', '⚠️ Voice input unclear or no response returned.', true);
         }
+
+
     } catch (error) {
         console.error('Error sending audio to server:', error);
         loader.style.display = 'none';
-        addMessage('assistant', 'Error processing audio. Please try again.');
+        addMessage('assistant', '⚠️ Error processing audio. Please try again.');
     }
 }
-
-
-
-
 
 // Play TTS response
 async function playAudioResponse(text) {
@@ -495,3 +493,219 @@ document.getElementById('registerRecipientForm').addEventListener('submit', asyn
     }
 });
 
+// Open Reminder Modal
+document.getElementById('reminder-button').addEventListener('click', function() {
+    document.getElementById('reminderModal').style.display = 'block';
+});
+
+// Close Reminder Modal
+function closeReminderModal() {
+    document.getElementById('reminderModal').style.display = 'none';
+}
+
+// Submit Reminder Form
+document.getElementById('reminderForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const message = document.getElementById('reminderMessage').value;
+    const timeInput = document.getElementById('reminderTime').value;
+    const priority = document.getElementById('reminderPriority').value;
+
+    if (!timeInput) {
+        showToast("Please select a reminder time.", true);
+        return;
+    }
+
+    // Convert local datetime to UTC "YYYY-MM-DD HH:MM:SS"
+    const localDate = new Date(timeInput);
+    const utcString = localDate.toISOString().slice(0, 19).replace("T", " ");  // ISO -> UTC format
+
+    const response = await fetch('/api/add-reminder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, remind_at: utcString, priority })
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+        showToast(result.message);
+        closeReminderModal();
+    } else {
+        showToast(result.error || "Failed to set reminder", true);
+    }
+});
+
+
+async function pollReminders() {
+    try {
+        const response = await fetch('/api/check-reminders');
+        const data = await response.json();
+
+        console.log("🧪 Polled Reminders:", data); // Add this
+
+        if (data.reminders && data.reminders.length > 0) {
+            data.reminders.forEach(reminder => {
+                const msg = `⏰ Reminder: ${reminder.message} (Priority: ${reminder.priority})`;
+                console.log("🔔 Showing Reminder:", msg); // Add this
+
+                addMessage('assistant', msg); // Show toast
+            });
+        }
+    } catch (err) {
+        console.error("Reminder poll error:", err);
+    }
+}
+
+// Check reminders every 30 seconds
+setInterval(pollReminders, 30000);
+
+
+document.getElementById("reminder-history-button").addEventListener("click", function () {
+    window.location.href = "/reminders";
+});
+
+
+
+async function loadFilteredReminders() {
+    const priority = document.getElementById("filter-priority").value;
+    const muted = document.getElementById("filter-muted").value;
+    const startDate = document.getElementById("filter-start-date").value;
+    const endDate = document.getElementById("filter-end-date").value;
+
+
+    let url = '/api/reminder-history';
+
+    const params = new URLSearchParams();
+    if (priority !== 'all') params.append('priority', priority);
+    if (muted !== 'all') params.append('muted', muted);
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+
+    if ([...params].length > 0) url += '?' + params.toString();
+
+
+    try {
+        const response = await fetch(url);
+        const result = await response.json();
+
+        const listContainer = document.getElementById("reminder-history-list");
+        listContainer.innerHTML = '';
+
+        if (result.reminders.length === 0) {
+            listContainer.innerHTML = "<p>No matching reminders found.</p>";
+        } else {
+            result.reminders.forEach(r => {
+                const el = document.createElement("div");
+                el.style.borderBottom = "1px solid #ccc";
+                el.style.padding = "5px 0";
+
+                const muteLabel = r.is_muted ? 'Unmute' : 'Mute';
+                const muteButtonId = `mute-btn-${r.id}`;
+
+                el.innerHTML = `
+                    <strong>${r.message}</strong><br>
+                    Time: ${r.remind_at}<br>
+                    Priority: ${r.priority}<br>
+                    Status: ${r.is_seen ? 'Seen' : 'Unseen'} | Muted: ${r.is_muted ? 'Yes' : 'No'}<br>
+                    <button class="btn btn-sm btn-warning" id="${muteButtonId}">${muteLabel}</button>
+                    <button class="btn btn-sm btn-danger" id="delete-btn-${r.id}">Delete</button>
+                `;
+
+
+                listContainer.appendChild(el);
+
+                setTimeout(() => {
+                    document.getElementById(`delete-btn-${r.id}`).addEventListener('click', () => deleteReminder(r.id));
+                    document.getElementById(`mute-btn-${r.id}`).addEventListener('click', () => toggleMute(r.id));
+                }, 0);
+
+            });
+        }
+
+        document.getElementById("reminder-history-modal").style.display = "block";
+    } catch (error) {
+        console.error("Error loading filtered reminders:", error);
+        showToast("Failed to load reminders", true);
+    }
+}
+
+
+function closeReminderHistory() {
+    document.getElementById("reminder-history-modal").style.display = "none";
+}
+
+
+async function toggleMute(reminderId) {
+    try {
+        const response = await fetch(`/api/toggle-mute/${reminderId}`, { method: 'POST' });
+        const result = await response.json();
+
+        if (response.ok) {
+            showToast(result.message);
+            // Reload the modal
+            document.getElementById("reminder-history-button").click();
+        } else {
+            showToast(result.error || "Failed to update mute status", true);
+        }
+    } catch (error) {
+        console.error("Mute toggle failed:", error);
+        showToast("Something went wrong", true);
+    }
+}
+
+
+async function deleteReminder(reminderId) {
+    if (!confirm("Are you sure you want to delete this reminder?")) return;
+
+    try {
+        const response = await fetch(`/api/delete-reminder/${reminderId}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showToast(result.message);
+            loadFilteredReminders(); // Reload modal
+        } else {
+            showToast(result.error || "Failed to delete reminder", true);
+        }
+    } catch (error) {
+        console.error("Delete failed:", error);
+        showToast("Something went wrong during deletion", true);
+    }
+}
+
+
+async function markAllSeen() {
+    try {
+        const response = await fetch('/api/reminders/mark-all-seen', { method: 'POST' });
+        const result = await response.json();
+        if (response.ok) {
+            showToast(result.message);
+            loadFilteredReminders();
+        } else {
+            showToast(result.error || "Failed to mark as seen", true);
+        }
+    } catch (error) {
+        console.error("Error marking all as seen:", error);
+        showToast("Error occurred", true);
+    }
+}
+
+async function markAllUnseen() {
+    try {
+        const response = await fetch('/api/reminders/mark-all-unseen', { method: 'POST' });
+        const result = await response.json();
+        if (response.ok) {
+            showToast(result.message);
+            loadFilteredReminders();
+        } else {
+            showToast(result.error || "Failed to mark as unseen", true);
+        }
+    } catch (error) {
+        console.error("Error marking all as unseen:", error);
+        showToast("Error occurred", true);
+    }
+}

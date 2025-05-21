@@ -46,7 +46,7 @@ def create_app():
     bootstrap.init_app(app)
     login_manager.init_app(app)
     mail.init_app(app)
-    oauth.init_app(app)
+#    oauth.init_app(app)
     migrate.init_app(app, db)
     app.config['SESSION_TYPE'] = 'filesystem'  # Can be Redis if needed
     Session(app)

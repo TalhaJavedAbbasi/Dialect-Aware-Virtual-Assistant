@@ -16,12 +16,25 @@ import re
 from app import mail, db
 from app.localized_news import fetch_news, fetch_events
 
-from app.models import Recipient
+from app.models import Recipient, CommandShortcut
 from app.stt_openai import transcribe_with_openai, convert_to_wav
 from .command_router import execute_complex_command, normalize_urdu_command, classify_command, load_simple_commands, \
     COMMAND_HANDLERS, execute_simple_command
 
 from app.models import Recipient, UserMood
+from app.voice_actions import send_email_action, open_app_action
+from difflib import SequenceMatcher
+
+from ..tone_dashboard import insert_sample_moods
+
+
+def fuzzy_match(user_input, query_list, threshold=0.85):
+    user_input = user_input.strip()
+    for q in query_list:
+        if SequenceMatcher(None, q.strip(), user_input).ratio() > threshold:
+            return True
+    return False
+
 
 voice_assistant_bp = Blueprint('voice_assistant', __name__, template_folder='templates')
 
@@ -115,22 +128,96 @@ def text_to_speech():
 def markdown_to_html(text):
     return re.sub(r'\[([^\]]+)\]\((https?://[^\)]+)\)', r'<a href="\2" target="_blank">\1</a>', text)
 
+from datetime import datetime
+
+def is_command_active_today(cmd):
+    if not cmd.activation_schedule:
+        return True  # No schedule = always active
+    today = datetime.now().strftime("%a")  # e.g., "Mon"
+    return today in (cmd.activation_schedule or "")
+
+
 
 def process_user_message(user_message):
     logging.debug(f"Processing user message: {user_message}")
     user_region = current_user.region if current_user.is_authenticated else "Islamabad"
+
+    # ✅ Custom command FIRST — absolute top priority
+    # Check if the user triggered a shortcut name
+    if current_user.is_authenticated:
+        user_shortcuts = CommandShortcut.query.filter_by(user_id=current_user.id).all()
+        matched_shortcut = next((s for s in user_shortcuts if s.shortcut_name.lower() == user_message.lower()), None)
+
+        if matched_shortcut:
+            responses = []
+            for cmd in matched_shortcut.commands:
+                if cmd.action_type == "send_email":
+                    from app.voice_actions import send_email_action
+                    result = send_email_action(cmd.parameters or {})
+                    responses.append(f"✉️ {result}")
+                elif cmd.action_type == "open_app":
+                    from app.voice_actions import open_app_action
+                    result = open_app_action(cmd.parameters or {})
+                    responses.append(f"📂 {result}")
+                else:
+                    responses.append(f"⚙️ {cmd.command_name} triggered.")
+
+            return {
+                "user_message": user_message,
+                "assistant_response": "<br>".join(responses)
+            }
+    # STEP 0 — Custom command match first
+    if current_user.is_authenticated:
+        from app.models import CustomCommand
+        from app.voice_actions import send_email_action, open_app_action
+
+        logging.debug("🔍 Checking for custom commands...")
+
+        custom_commands = CustomCommand.query.filter_by(user_id=current_user.id, status=True).all()
+        logging.debug(f"Found {len(custom_commands)} custom commands for user {current_user.id}")
+
+        matched_command = next((cmd for cmd in custom_commands if cmd.trigger_phrase.lower().strip() == user_message.lower().strip()), None)
+
+        if matched_command:
+            if not is_command_active_today(matched_command):
+                return {
+                    "user_message": user_message,
+                    "assistant_response": f"⏳ The command <strong>{matched_command.command_name}</strong> is not scheduled to run today."
+                }
+
+            logging.debug(f"✅ Matched custom command: {matched_command.trigger_phrase} → {matched_command.action_type}")
+            if matched_command.action_type == "send_email":
+                result = send_email_action(matched_command.parameters or {})
+                command_response = f"✉️ {result}"
+            elif matched_command.action_type == "open_app":
+                result = open_app_action(matched_command.parameters or {})
+                command_response = f"📂 {result}"
+            else:
+                command_response = f"⚙️ Triggered custom command: {matched_command.command_name}"
+
+            session['context']["messages"].append({"role": "assistant", "content": command_response})
+            session.modified = True
+            return {
+                "user_message": user_message,
+                "assistant_response": command_response
+            }
+
     event_queries = [
-        "آج کے ایونٹس", "قریبی تقریبات", "مجھے آج کی تقریبات بتاؤ",
+        "آج کے ایونٹس", "تقریبات", "مجھے آج کی تقریبات بتاؤ",
         "events near me", "show me today's events"
     ]
-    if any(query in user_message.lower() for query in event_queries):
+    if fuzzy_match(user_message, event_queries):
         events_list = fetch_events(user_region)
         formatted_events = "\n\n".join(events_list)
 
         return {
             "user_message": user_message,
-            "assistant_response": formatted_events
+            "assistant_response": str(formatted_events),  # ✅ explicit string
+            "detected_tone": None  # ✅ added
+
         }
+
+
 
     # Check if user asked for news
     news_queries = [
@@ -140,10 +227,12 @@ def process_user_message(user_message):
     user_language = current_user.language if current_user.is_authenticated else "en"
     print(user_language)
 
-    if any(query in user_message.lower() for query in news_queries):
+    if fuzzy_match(user_message, news_queries):
         return {
             "user_message": user_message,
-            "assistant_response":  markdown_to_html(fetch_news(user_language))
+            "assistant_response":  markdown_to_html(fetch_news(user_language)),
+            "detected_tone": None  # ✅ added
+
         }
 
     if 'context' not in session:
@@ -176,7 +265,14 @@ def process_user_message(user_message):
         formatted_response = markdown(command_response)
         session['context']["messages"].append({"role": "assistant", "content": formatted_response})
         session.modified = True
-        return formatted_response
+        return {
+            "user_message": user_message,
+            "assistant_response": str(formatted_response),  # ✅ ensure it's plain string
+            "detected_tone": None  # ✅ added
+
+        }
+
+
 
     # **Step 3: Check if the user is asking for a mood summary**
     mood_summary_queries_en = [
@@ -189,9 +285,7 @@ def process_user_message(user_message):
         "میں کیسا محسوس کر رہا ہوں؟", "موڈ کا خلاصہ"
     ]
 
-
-
-    if user_message.lower() in mood_summary_queries_en or user_message.strip() in mood_summary_queries_ur:
+    if fuzzy_match(user_message, mood_summary_queries_en) or fuzzy_match(user_message, mood_summary_queries_ur):
         return get_mood_summary().json["message"]
 
     # **Step 4: Evaluate Tone**
@@ -231,7 +325,7 @@ def process_user_message(user_message):
     # **Step 7: Store response & detected tone in session**
     if tone_response in ["Happy", "Sad", "Frustrated"]:
         session['context']["messages"].append(
-            {"role": "assistant", "content": f"(Detected Tone: {tone_response}) {assistant_response}"})
+            {"role": "assistant", "content": assistant_response})
     else:
         session['context']["messages"].append({"role": "assistant", "content": assistant_response})
 
@@ -257,8 +351,13 @@ def process_audio():
     # Convert to WAV format for compatibility
     wav_path = convert_to_wav(file_path)
 
-    # Use OpenAI for transcription
-    transcription = transcribe_with_openai(wav_path)
+    # 👇 Get the user's preferred language or fallback to English
+    language_code = getattr(current_user, "language", "en")
+
+    print(f"Transcribing using OpenAI Whisper in language: {language_code}")
+
+    # ✅ Pass the language to OpenAI Whisper
+    transcription = transcribe_with_openai(wav_path, language=language_code)
 
     logging.debug(f"Transcription output: {transcription}")
 
@@ -444,11 +543,13 @@ def get_mood_summary():
 
     mood_trend_message = mood_messages[dominant_mood]["ur"] if user_language == "ur" else mood_messages[dominant_mood]["en"]
 
-    # Return the message in the appropriate language
+    summary_title = "آج کا موڈ خلاصہ:" if user_language == "ur" else "Today's Mood Summary:"
+    summary_text = mood_summary_ur if user_language == "ur" else mood_summary_en
+
     return jsonify({
-        "message": f"📊 <strong>{'آج کا موڈ خلاصہ:' if user_language == 'ur' else "Today's Mood Summary:"}</strong> <br>"
-                   f"{mood_summary_ur if user_language == 'ur' else mood_summary_en}<br>{mood_trend_message}"
+        "message": f"📊 <strong>{summary_title}</strong> <br>{summary_text}<br>{mood_trend_message}"
     })
+
 
 @voice_assistant_bp.route('/api/submit-tone-feedback', methods=['POST'])
 def submit_tone_feedback():
@@ -472,3 +573,4 @@ def submit_tone_feedback():
         logging.info(f"User corrected tone from {original_tone} → {correct_tone}")
 
     return jsonify({"message": "Tone updated successfully! Thank you for your feedback."})
+

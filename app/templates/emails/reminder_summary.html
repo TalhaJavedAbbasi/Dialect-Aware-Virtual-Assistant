@@ -1,0 +1,27 @@
+<h2>Hello {{ user.name }},</h2>
+<p>Here is your reminder summary:</p>
+
+<table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse;">
+  <thead>
+  <tr>
+    <th>Message</th>
+    <th>Time</th>
+    <th>Priority</th>
+    <th>Seen</th>
+    <th>Muted</th>
+  </tr>
+  </thead>
+  <tbody>
+  {% for r in reminders %}
+  <tr>
+    <td>{{ r.message }}</td>
+    <td>{{ r.remind_at }}</td>
+    <td>{{ r.priority }}</td>
+    <td>{{ 'Yes' if r.is_seen else 'No' }}</td>
+    <td>{{ 'Yes' if r.is_muted else 'No' }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<p>— Your AI Assistant</p>

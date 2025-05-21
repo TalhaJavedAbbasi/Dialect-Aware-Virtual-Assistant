@@ -116,7 +116,7 @@ class ProfileForm(FlaskForm):
             validate_email_format
         ]
     )
-    language = SelectField('Preferred Language', choices=[('en', 'English'), ('ur', 'Urdu')], validators=[DataRequired()])
+    language = SelectField('Preferred Dialect/Language', choices=[('en', 'English'), ('ur', 'Urdu')], validators=[DataRequired()])
     city = SelectField(
         'City',
         choices=[

@@ -1,4 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify
+from flask_login import current_user
+
 from app.models import CustomCommand, CommandShortcut
 from app import db  # Import database instance
 
@@ -14,6 +16,13 @@ def voice_commands_page():
 @voice_commands_bp.route('/create', methods=['POST'])
 def create_command():
     data = request.json
+
+    # 🛑 Check for existing trigger phrase globally
+    existing = CustomCommand.query.filter_by(trigger_phrase=data['trigger_phrase']).first()
+    if existing:
+        return jsonify({'error': '❗This trigger phrase already exists. Please choose a different one.'}), 400
+
+    # ✅ Save new command
     new_command = CustomCommand(
         user_id=data['user_id'],
         command_name=data['command_name'],
@@ -24,13 +33,13 @@ def create_command():
     )
     db.session.add(new_command)
     db.session.commit()
-    return jsonify({'message': 'Command saved successfully!'})
+    return jsonify({'message': '✅ Command saved successfully!'})
 
 
 # Fetch all commands
 @voice_commands_bp.route('/get-commands', methods=['GET'])
 def get_commands():
-    commands = CustomCommand.query.all()
+    commands = CustomCommand.query.filter_by(user_id=current_user.id).all()
     command_list = [
         {
             'id': cmd.id,
@@ -105,6 +114,17 @@ def update_schedule(cmd_id):
 @voice_commands_bp.route('/create-shortcut', methods=['POST'])
 def create_shortcut():
     data = request.json
+
+    # ✅ Check for duplicate shortcut name for same user
+    existing = CommandShortcut.query.filter_by(
+        user_id=data['user_id'],
+        shortcut_name=data['shortcut_name']
+    ).first()
+
+    if existing:
+        return jsonify({'error': '⚠️ This shortcut name already exists. Please choose a unique name.'}), 400
+
+    # Proceed if no duplicate
     new_shortcut = CommandShortcut(
         user_id=data['user_id'],
         shortcut_name=data['shortcut_name'],
@@ -118,13 +138,14 @@ def create_shortcut():
 
     db.session.add(new_shortcut)
     db.session.commit()
-    return jsonify({'message': 'Shortcut created successfully!'})
+    return jsonify({'message': '✅ Shortcut created successfully!'})
+
 
 
 # Fetch all shortcuts
 @voice_commands_bp.route('/get-shortcuts', methods=['GET'])
 def get_shortcuts():
-    shortcuts = CommandShortcut.query.all()
+    shortcuts = CommandShortcut.query.filter_by(user_id=current_user.id).all()
     shortcut_list = [
         {
             'id': s.id,

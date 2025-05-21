@@ -3,6 +3,8 @@ from flask_login import current_user
 from app.models import UserMood
 from datetime import datetime, timedelta
 from collections import Counter
+import random
+from app import db
 
 tone_dashboard_bp = Blueprint('tone_dashboard', __name__, template_folder='templates')
 
@@ -47,3 +49,26 @@ def get_mood_trends():
         "mood_trends": mood_counts,
         "dominant_mood": dominant_mood,
     })
+
+def insert_sample_moods(user_id):
+    moods = ['Happy', 'Sad', 'Frustrated']
+    now = datetime.utcnow()
+    entries = []
+
+    for i in range(7):  # Last 7 days
+        day = now - timedelta(days=i)
+        for _ in range(random.randint(2, 4)):  # 2-4 moods per day
+            mood = UserMood(
+                user_id=user_id,
+                mood=random.choice(moods),
+                timestamp=day.replace(
+                    hour=random.randint(9, 20),
+                    minute=random.randint(0, 59),
+                    second=random.randint(0, 59)
+                )
+            )
+            entries.append(mood)
+
+    db.session.bulk_save_objects(entries)
+    db.session.commit()
+    print(f"✅ Inserted {len(entries)} sample mood records for user_id={user_id}")

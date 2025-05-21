@@ -1,0 +1,103 @@
+{% from "bootstrap5/form.html" import render_form %}
+{% block content %}
+{% include "header.html" %}
+
+<header class="masthead" style="background-image: url('static/assets/img/reminder-bg.png')">
+    <div class="container position-relative px-4 px-lg-5">
+    </div>
+    <div class="row gx-4 gx-lg-5 justify-content-center">
+        <div class="col-md-10 col-lg-8 col-xl-7">
+            <div class="bobbing-container">
+                <div class="wave-container"></div>
+                <div class="page-heading">
+                    <h1>📋 Reminder History</h1>
+                    <span class="subheading">Review, manage, and filter all your scheduled reminders</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+
+
+<main class="container my-5">
+    <div class="custom-card">
+        <h3 class="text-center mb-4">Filter Reminders</h3>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Priority</label>
+                <select class="form-select" id="filter-priority">
+                    <option value="all">All</option>
+                    <option value="high">High</option>
+                    <option value="normal">Normal</option>
+                    <option value="low">Low</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Muted</label>
+                <select class="form-select" id="filter-muted">
+                    <option value="all">All</option>
+                    <option value="true">Muted</option>
+                    <option value="false">Unmuted</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Start Date</label>
+                <input type="date" class="form-control" id="filter-start-date">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">End Date</label>
+                <input type="date" class="form-control" id="filter-end-date">
+            </div>
+        </div>
+
+        <div class="row g-3 mt-2">
+            <div class="col-md-6">
+                <label class="form-label">Search Message</label>
+                <input type="text" class="form-control" id="filter-search" placeholder="e.g. meeting, doctor, groceries">
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap mt-4 mb-3 gap-2">
+            <div class="btn-group" role="group">
+                <button class="btn btn-outline-secondary" onclick="loadFilteredReminders()">🔍 Apply Filters</button>
+
+                <a href="#" class="btn btn-outline-secondary" id="export-csv-btn" target="_blank">
+                    ⬇️ Export to CSV
+                </a>
+
+                <a href="#" id="email-summary-btn" class="btn btn-outline-secondary ms-2">
+                    📧 Email Reminder Summary
+                </a>
+
+            </div>
+
+            <div class="btn-group" role="group">
+                <button class="btn btn-outline-success" onclick="markAllSeen()">✅ Mark All Seen</button>
+                <button class="btn btn-outline-warning" onclick="markAllUnseen()">👁️ Mark All Unseen</button>
+            </div>
+        </div>
+
+
+        <div class="table-responsive">
+        <table class="table table-striped reminder-table">
+            <thead>
+            <tr>
+                <th>Message</th>
+                <th>Time</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>Muted</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody id="reminder-history-list">
+            <!-- JS will populate here -->
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<script src="{{ url_for('static', filename='js/reminder_history.js') }}"></script>
+{% include "footer.html" %}
+{% endblock %}

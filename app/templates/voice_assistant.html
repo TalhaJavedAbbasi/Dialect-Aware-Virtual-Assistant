@@ -18,6 +18,8 @@
         <div class="FABMenu" id="fab-menu">
             <button class="FABMenuButton ResetButton" id="reset-context-button" title="Reset Context">Reset</button>
             <button class="FABMenuButton HelpButton" id="help-button" title="View Complex Commands">Help</button>
+            <button class="FABMenuButton" id="reminder-button" title="Set Reminder">Set Reminder</button>
+            <button class="FABMenuButton" id="reminder-history-button" title="View Reminder History">Reminder History</button>
             <button class="FABMenuButton" id="test-modal-button" data-toggle="modal" data-target="#addRecipientModal">Test Modal</button>
             <button class="FABMenuButton" id="mood-summary-button" title="View Mood Summary">Mood Summary</button>
             <button class="FABMenuButton" id="tone-overview-button" title="View Tone Overview">Tone Overview</button>
@@ -152,6 +154,85 @@
       </div>
     </div>
   </div>
+</div>
+
+
+<!-- Reminder Modal -->
+<div class="modal" id="reminderModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Set Reminder</h5>
+                <button type="button" class="close" data-dismiss="modal" onclick="closeReminderModal()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="reminderForm">
+                    <div class="form-group">
+                        <label for="reminderMessage">Message</label>
+                        <input type="text" class="form-control" id="reminderMessage" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reminderTime">Remind At</label>
+                        <input type="datetime-local" class="form-control" id="reminderTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reminderPriority">Priority</label>
+                        <select class="form-control" id="reminderPriority">
+                            <option value="normal">Normal</option>
+                            <option value="high">High</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Reminder</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Reminder History Modal -->
+<div id="reminder-history-modal" class="Modal">
+    <div class="ModalContent">
+        <h3 class="ModalTitle">Reminder History</h3>
+        <div style="margin-bottom: 10px;">
+            <label>Priority:</label>
+            <select id="filter-priority">
+                <option value="all">All</option>
+                <option value="high">High</option>
+                <option value="normal">Normal</option>
+                <option value="low">Low</option>
+            </select>
+
+            <label style="margin-left: 10px;">Muted:</label>
+            <select id="filter-muted">
+                <option value="all">All</option>
+                <option value="true">Muted</option>
+                <option value="false">Unmuted</option>
+            </select>
+            <div style="margin-top: 10px; margin-bottom: 10px;">
+                <label>From:</label>
+                <input type="date" id="filter-start-date">
+
+                <label style="margin-left: 10px;">To:</label>
+                <input type="date" id="filter-end-date">
+            </div>
+
+            <button class="btn btn-sm btn-secondary" onclick="loadFilteredReminders()">Apply Filters</button>
+        </div>
+        <div style="margin-bottom: 10px;">
+            <button class="btn btn-sm btn-outline-success" onclick="markAllSeen()">Mark All as Seen</button>
+            <button class="btn btn-sm btn-outline-warning" onclick="markAllUnseen()">Mark All as Unseen</button>
+        </div>
+
+
+        <div id="reminder-history-list" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;">
+            <!-- Reminders will be populated here -->
+        </div>
+        <button class="ModalButton ModalButton--close" onclick="closeReminderHistory()">Close</button>
+    </div>
 </div>
 
 
