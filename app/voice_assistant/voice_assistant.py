@@ -1,6 +1,5 @@
 import time
 import logging
-from datetime import datetime
 from flask import Blueprint, render_template, request, jsonify, session, Response
 from flask_login import current_user
 from app.stt import transcribe_with_speech_recognition, convert_to_wav
@@ -26,6 +25,11 @@ from app.voice_actions import send_email_action, open_app_action
 from difflib import SequenceMatcher
 
 from ..tone_dashboard import insert_sample_moods
+from googletrans import Translator
+from app.speaker_id import build_speaker_profiles, identify_speaker
+from app.speaker_id import build_speaker_profiles, identify_speaker
+import tempfile
+from pydub import AudioSegment
 
 
 def fuzzy_match(user_input, query_list, threshold=0.85):
@@ -46,9 +50,12 @@ if not gemini_api_key:
 
 # Configure the Gemini API
 genai.configure(api_key=gemini_api_key)
+build_speaker_profiles()
 
+translator = Translator()
 # Initialize the Gemini model globally
 model = genai.GenerativeModel(model_name="gemini-1.5-flash")
+
 
 # Ensure the uploads folder exists
 UPLOAD_FOLDER = 'uploads'
@@ -58,6 +65,29 @@ context = {
     "messages": [],  # List of messages
     "state": {}      # Key-value pairs for conversation flags
 }
+
+@voice_assistant_bp.route('/api/translate', methods=['POST'])
+def translate_only():
+    data = request.json
+    text = data.get("text", "")
+    target_lang = data.get("target_lang", "en")
+
+    if not text:
+        return jsonify({"error": "No text provided."}), 400
+
+    try:
+        detected_lang = detect(text)
+        translation = translator.translate(text, src=detected_lang, dest=target_lang)
+
+        return jsonify({
+            "original": text,
+            "translated": translation.text,
+            "source_lang": detected_lang,
+            "target_lang": target_lang,
+            "speaker": "Unknown"  # For now, will update this later in speaker ID phase
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # Function to detect Roman Urdu
 def is_roman_urdu(text):
@@ -97,6 +127,8 @@ def determine_tts_settings(text):
 @voice_assistant_bp.route('/api/tts', methods=['POST'])
 def text_to_speech():
     text = request.json.get('text', '')
+    print(f"🧪 Generating TTS for: {text}")
+
     if not text:
         return jsonify({"error": "No text provided"}), 400
 
@@ -340,6 +372,8 @@ def process_user_message(user_message):
 
 @voice_assistant_bp.route('/api/audio-input', methods=['POST'])
 def process_audio():
+    is_translation_mode = request.args.get("translation", "false").lower() == "true"
+
     if 'audio' not in request.files:
         return jsonify({"error": "No audio file provided"}), 400
 
@@ -351,13 +385,17 @@ def process_audio():
     # Convert to WAV format for compatibility
     wav_path = convert_to_wav(file_path)
 
-    # 👇 Get the user's preferred language or fallback to English
-    language_code = getattr(current_user, "language", "en")
-
-    print(f"Transcribing using OpenAI Whisper in language: {language_code}")
-
-    # ✅ Pass the language to OpenAI Whisper
-    transcription = transcribe_with_openai(wav_path, language=language_code)
+    if is_translation_mode:
+        # Let Whisper auto-detect language
+        print("🎙️ Using Whisper with auto-detect")
+        speaker = identify_speaker(wav_path)  # Add this line
+        transcription = transcribe_with_openai(wav_path)
+    else:
+        # Use user’s preferred language
+        speaker = None
+        language_code = getattr(current_user, "language", "en")
+        print(f"🎙️ Transcribing with user language: {language_code}")
+        transcription = transcribe_with_openai(wav_path, language=language_code)
 
     logging.debug(f"Transcription output: {transcription}")
 
@@ -365,8 +403,10 @@ def process_audio():
 
     return jsonify({
         "user_message": transcription,
+        "speaker": speaker,
         "assistant_response": assistant_response
     })
+
 
 
 # Function to generate response from Gemini
@@ -574,3 +614,34 @@ def submit_tone_feedback():
 
     return jsonify({"message": "Tone updated successfully! Thank you for your feedback."})
 
+
+@voice_assistant_bp.route("/api/upload-voice", methods=["POST"])
+def upload_voice_sample():
+    if "audio" not in request.files or "name" not in request.form:
+        return jsonify({"error": "Audio file and speaker name are required."}), 400
+
+    name = request.form["name"]
+    audio_file = request.files["audio"]
+    ext = os.path.splitext(audio_file.filename)[1]
+    filename = secure_filename(f"{name}{ext}")
+    os.makedirs("speakers", exist_ok=True)  # ✅ Ensure directory exists
+    save_path = os.path.join("speakers", filename)
+
+    try:
+        print(f"🔽 Uploading voice sample for: {name}")
+        with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as temp:
+            temp.write(audio_file.read())
+            temp_path = temp.name
+
+        audio = AudioSegment.from_file(temp_path)
+        audio = audio.set_channels(1).set_frame_rate(16000)
+        audio.export(save_path, format="wav")
+
+        os.remove(temp_path)
+        build_speaker_profiles()
+
+        return jsonify({"message": f"✅ Voice sample for '{name}' uploaded successfully!"})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Failed to process audio: {str(e)}"}), 500

@@ -139,41 +139,84 @@ function stopRecording() {
 
 
 async function sendAudioToServer(audioBlob) {
-    const formData = new FormData();
-    formData.append('audio', audioBlob, 'input.wav');
+  const formData = new FormData();
+  formData.append('audio', audioBlob, 'input.wav');
 
-    loader.style.display = 'block';  // Show loader
+  loader.style.display = 'block';
 
-    try {
-        const response = await fetch('/api/audio-input', {
-            method: 'POST',
-            body: formData
-        });
+  try {
+    const isTranslationMode = document.getElementById("enable-translation-mode").checked;
+    const response = await fetch(`/api/audio-input?translation=${isTranslationMode}`, {
+      method: 'POST',
+      body: formData
+    });
 
-        const result = await response.json();
-        console.log('Server response:', result);
+    const result = await response.json();
+    console.log('Server response:', result);
 
-        loader.style.display = 'none';
+    const transcription = result.user_message;
 
-        if (result && result.assistant_response && result.assistant_response.assistant_response) {
-            const assistantData = result.assistant_response;
-
-            addMessage('user', result.user_message);
-            addMessage('assistant', assistantData.assistant_response, assistantData.detected_tone);
-        } else {
-            addMessage('system', '⚠️ Voice input unclear or no response returned.', true);
-        }
-
-
-    } catch (error) {
-        console.error('Error sending audio to server:', error);
-        loader.style.display = 'none';
-        addMessage('assistant', '⚠️ Error processing audio. Please try again.');
+    if (!transcription) {
+      loader.style.display = 'none';
+      addMessage('system', '⚠️ No speech detected.');
+      return;
     }
+
+    addMessage('user', transcription); // Show transcribed speech
+
+    if (isTranslationMode) {
+      const targetLang = document.getElementById("target-lang").value;
+      const translationRes = await fetch('/api/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: transcription, target_lang: targetLang })
+      });
+
+      const translationData = await translationRes.json();
+      loader.style.display = 'none';
+
+      if (translationData.translated) {
+        const speaker = result.speaker || "Unknown"; // ✅ use result, not translationData
+        const finalText = `${speaker}: ${translationData.translated}`;
+        addMessage('assistant', finalText);
+        await playAudioResponse(translationData.translated);
+      } else {
+        addMessage('assistant', '⚠️ Translation failed.');
+      }
+
+    } else {
+      const assistantData = result.assistant_response;
+      loader.style.display = 'none';
+
+      if (assistantData && assistantData.assistant_response) {
+        addMessage('assistant', assistantData.assistant_response, assistantData.detected_tone);
+        await playAudioResponse(assistantData.assistant_response);
+      } else {
+        addMessage('assistant', '⚠️ Voice input unclear or no response returned.');
+      }
+    }
+
+  } catch (error) {
+    console.error('Error sending audio to server:', error);
+    loader.style.display = 'none';
+    addMessage('assistant', '⚠️ Error processing audio. Please try again.');
+  }
+
+  // ✅ Fix mic/send toggle
+  if (chatInput.value.trim() === '') {
+    sendButton.style.display = 'none';
+    micButton.style.display = 'block';
+  } else {
+    sendButton.style.display = 'block';
+    micButton.style.display = 'none';
+  }
 }
+
 
 // Play TTS response
 async function playAudioResponse(text) {
+  console.log("🔊 playAudioResponse called with:", text);
+
   try {
     // Send text to the TTS API
     const response = await fetch('/api/tts', {
@@ -181,6 +224,8 @@ async function playAudioResponse(text) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text })
     });
+    console.log("TTS fetch response status:", response.status);
+
 
     // Check if the response is OK
     if (!response.ok) {
@@ -194,6 +239,9 @@ async function playAudioResponse(text) {
     const audioURL = URL.createObjectURL(audioBlob);
     const audio = new Audio(audioURL);
     audio.play();
+    audio.onplay = () => console.log("✅ Audio is playing...");
+    audio.onerror = (e) => console.error("❌ Audio playback error:", e);
+
   } catch (error) {
     console.error('Error:', error.message);
     alert('Failed to generate audio. Please try again later.');
@@ -273,7 +321,7 @@ async function submitToneCorrection() {
 }
 
 
-sendButton.addEventListener('click', async () => {
+sendButton.addEventListener("click", async () => {
   const userMessage = chatInput.value.trim();
   if (!userMessage) return;
 
@@ -282,45 +330,50 @@ sendButton.addEventListener('click', async () => {
   sendButton.disabled = true;
 
   // Add user message to chat
-  addMessage('user', userMessage);
-  chatInput.value = '';
+  addMessage("user", userMessage);
+  chatInput.value = "";
 
   // Reset textarea height to its minimum and recalculate overflow
   const lineHeight = parseInt(getComputedStyle(chatInput).lineHeight, 10);
   chatInput.style.height = `${lineHeight}px`;
-  chatInput.style.overflowY = "hidden"; // Hide overflow after reset
+  chatInput.style.overflowY = "hidden";
 
   // Show loader
-  loader.style.display = 'flex';
+  loader.style.display = "flex";
+
+  const isTranslationMode = document.getElementById("enable-translation-mode").checked;
 
   try {
-    const response = await fetch('/api/gemini-response', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: userMessage }),
-    });
-
-    const data = await response.json();
-    console.log("Raw API Response:", data);  // ✅ Log the entire response
-
-    loader.style.display = 'none';
-
-
-    if (data.assistant_response) {
-        // ✅ Use the updated `addMessage` function with detected tone
-        addMessage('assistant', data.assistant_response, data.detected_tone);
+    if (isTranslationMode) {
+      await handleTranslationFlow(userMessage);
+      loader.style.display = "none"; // ✅ Ensure loader is hidden after translation
     } else {
-        addMessage('assistant', 'Sorry, something went wrong.');
+      const response = await fetch("/api/gemini-response", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userMessage })
+      });
+
+      const data = await response.json();
+      console.log("Raw API Response:", data); // ✅ Keep the log
+      loader.style.display = "none";
+
+      if (data.assistant_response) {
+        addMessage("assistant", data.assistant_response, data.detected_tone);
+        await playAudioResponse(data.assistant_response);
+      } else {
+        addMessage("assistant", "Sorry, something went wrong.");
+      }
     }
   } catch (error) {
-    loader.style.display = 'none';
-    addMessage('assistant', 'Error connecting to the server.');
+    loader.style.display = "none";
+    addMessage("assistant", "Error connecting to the server.");
   } finally {
     chatInput.disabled = false;
     sendButton.disabled = false;
-
     chatInput.focus();
 
+    // ✅ Reapply mic/send toggle behavior
     if (chatInput.value.trim() === '') {
       sendButton.style.display = 'none';
       micButton.style.display = 'block';
@@ -558,7 +611,7 @@ async function pollReminders() {
 }
 
 // Check reminders every 30 seconds
-setInterval(pollReminders, 30000);
+setInterval(pollReminders, 50000);
 
 
 document.getElementById("reminder-history-button").addEventListener("click", function () {
@@ -709,3 +762,70 @@ async function markAllUnseen() {
         showToast("Error occurred", true);
     }
 }
+
+// ✅ Add to voice_assistant.js
+async function handleTranslationFlow(inputText) {
+  const targetLang = document.getElementById("target-lang").value;
+  try {
+    const response = await fetch("/api/translate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: inputText, target_lang: targetLang })
+    });
+
+    const result = await response.json();
+    if (result.translated) {
+      const speaker = result.speaker || "Unknown";
+      const displayText = `${speaker}: ${result.translated}`;
+      addMessage("assistant", displayText);
+      await playAudioResponse(result.translated);
+    } else {
+      addMessage("assistant", "Translation failed.");
+    }
+  } catch (err) {
+    console.error("Translation error:", err);
+    addMessage("assistant", "Translation error occurred.");
+  }
+}
+
+document.getElementById("upload-voice-button").addEventListener("click", () => {
+  document.getElementById("uploadVoiceModal").style.display = "block";
+});
+
+function closeUploadModal() {
+  document.getElementById("uploadVoiceModal").style.display = "none";
+}
+
+document.getElementById("uploadVoiceForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
+
+  const name = document.getElementById("speakerName").value.trim();
+  const fileInput = document.getElementById("voiceSample");
+
+  if (!name || fileInput.files.length === 0) {
+    showToast("Please provide both name and audio file.", true);
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("name", name);
+  formData.append("audio", fileInput.files[0]);
+
+  try {
+    const response = await fetch("/api/upload-voice", {
+      method: "POST",
+      body: formData
+    });
+
+    const result = await response.json();
+    if (response.ok) {
+      showToast(result.message);
+      closeUploadModal();
+    } else {
+      showToast(result.error, true);
+    }
+  } catch (err) {
+    console.error("Upload failed:", err);
+    showToast("Upload failed", true);
+  }
+});

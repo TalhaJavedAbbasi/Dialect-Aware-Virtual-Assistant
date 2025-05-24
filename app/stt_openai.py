@@ -38,7 +38,7 @@ def convert_to_wav(audio_path):
     audio.export(wav_path, format="wav")
     return wav_path
 
-def transcribe_with_openai(audio_path, language='en'):
+def transcribe_with_openai(audio_path, language=None):
     duration, estimated_cost = get_audio_duration_and_cost(audio_path)
     print(f"Audio Duration: {duration:.2f} seconds")
     print(f"Estimated Cost: ${estimated_cost:.4f}")
@@ -46,14 +46,23 @@ def transcribe_with_openai(audio_path, language='en'):
     try:
         logging.info(f"Transcribing audio file: {audio_path}")
         with open(audio_path, "rb") as audio_file:
-            response = openai.Audio.transcribe(
-                model="whisper-1",
-                file=audio_file,
-                language=language  # 👈 language passed here
-            )
+            if language:
+                response = openai.Audio.transcribe(
+                    model="whisper-1",
+                    file=audio_file,
+                    language=language
+                )
+            else:
+                response = openai.Audio.transcribe(
+                    model="whisper-1",
+                    file=audio_file
+                    # 👈 no language passed = auto-detect
+                )
+        print(f"📢 Whisper detected language: {response.get('language')}")
         return response.get("text", "Transcription failed.")
     except Exception as e:
         return f"Error: {str(e)}"
+
 
 
 @stt_openai_bp.route('/transcribe_audio_openai', methods=['POST'])

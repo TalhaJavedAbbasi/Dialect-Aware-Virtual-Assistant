@@ -20,6 +20,7 @@
             <button class="FABMenuButton HelpButton" id="help-button" title="View Complex Commands">Help</button>
             <button class="FABMenuButton" id="reminder-button" title="Set Reminder">Set Reminder</button>
             <button class="FABMenuButton" id="reminder-history-button" title="View Reminder History">Reminder History</button>
+            <button class="FABMenuButton" id="upload-voice-button" title="Upload Voice Sample">Upload Voice</button>
             <button class="FABMenuButton" id="test-modal-button" data-toggle="modal" data-target="#addRecipientModal">Test Modal</button>
             <button class="FABMenuButton" id="mood-summary-button" title="View Mood Summary">Mood Summary</button>
             <button class="FABMenuButton" id="tone-overview-button" title="View Tone Overview">Tone Overview</button>
@@ -42,9 +43,22 @@
 
 
     <div class="Controls">
+        <div style="margin-bottom: 5px;">
+            <label style="color: white; font-size: 14px;">
+                <input type="checkbox" id="enable-translation-mode" style="margin-right: 5px;">
+                Enable Translation Mode
+            </label>
+            <select id="target-lang" style="margin-left: 10px;">
+                <option value="en">English</option>
+                <option value="ur">Urdu</option>
+                <option value="it">Italian</option>
+            </select>
+        </div>
+
         <div class="TextAreaContainer">
             <textarea class="TextArea" id="chat-input" rows="1" placeholder="Message AI Assistant"></textarea>
         </div>
+
         <button class="Button" id="send-button">
             <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#fff">
                 <path d="M120-160v-640l760 320-760 320Zm80-120 474-200-474-200v140l240 60-240 60v140Zm0 0v-400 400Z" />
@@ -192,6 +206,32 @@
     </div>
 </div>
 
+<div class="modal" id="uploadVoiceModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Upload Voice Sample</h5>
+                <button type="button" class="close" onclick="closeUploadModal()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadVoiceForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="speakerName">Speaker Name</label>
+                        <input type="text" class="form-control" id="speakerName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="voiceSample">Voice Sample (.wav or .m4a)</label>
+                        <input type="file" class="form-control" id="voiceSample" accept=".wav,.m4a" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <!-- Reminder History Modal -->
 <div id="reminder-history-modal" class="Modal">
@@ -226,7 +266,6 @@
             <button class="btn btn-sm btn-outline-success" onclick="markAllSeen()">Mark All as Seen</button>
             <button class="btn btn-sm btn-outline-warning" onclick="markAllUnseen()">Mark All as Unseen</button>
         </div>
-
 
         <div id="reminder-history-list" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;">
             <!-- Reminders will be populated here -->
